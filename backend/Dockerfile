@@ -37,6 +37,7 @@ COPY --from=builder /app/target/release/high_concurrency_api high_concurrency_ap
 
 # Copiamos la configuración necesaria
 COPY configuration configuration
+COPY migrations migrations
 
 # Exponemos el puerto de la aplicación
 EXPOSE 8000

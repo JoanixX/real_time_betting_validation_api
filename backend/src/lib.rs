@@ -12,6 +12,8 @@ use actix_web::{web, App, HttpServer};
 use sqlx::PgPool;
 use std::net::TcpListener;
 use tracing_actix_web::TracingLogger;
+use tracing_actix_web::TracingLogger;
+use actix_cors::Cors;
 
 pub struct Application {
     port: u16,
@@ -55,9 +57,17 @@ pub fn run(
     let db_pool = web::Data::new(db_pool);
     
     let server = HttpServer::new(move || {
+        let cors = Cors::default()
+            .allow_any_origin() // En producción deberías restringir esto
+            .allow_any_method()
+            .allow_any_header()
+            .max_age(3600);
+
         App::new()
+            .wrap(cors)
             .wrap(TracingLogger::default()) // Middleware de Logging Estructurado
-            .route("/", web::get().to(handlers::health_check)) // Ruta raiz
+            .route("/health_check", web::get().to(handlers::health_check))
+            .configure(routes::configure_routes)
             .configure(routes::configure_routes)
             .app_data(db_pool.clone())
     })

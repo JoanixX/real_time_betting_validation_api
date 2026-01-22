@@ -15,7 +15,7 @@ services:
       - backend_network
 
   app:
-    build: .
+    build: ./backend
     image: high_concurrency_api
     ports:
       - "8000:8000"

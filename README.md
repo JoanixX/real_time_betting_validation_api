@@ -10,18 +10,20 @@ Este proyecto es una base arquitectónica profesional para construir servicios b
 
 El proyecto sigue una arquitectura estratificada (Layered Architecture) para garantizar la separación de responsabilidades y la testabilidad.
 
-### Estructura de Carpetas
+### Estructura de Carpetas (Monorepo)
 
-- `src/main.rs`: **Entry Point**. Inicializa la telemetría, carga la configuración y arranca el servidor.
-- `src/lib.rs`: **Application Setup**. Configura el `App` de Actix-Web, inyecta dependencias (DB Pool) y define el `startup` del servidor.
-- `src/config/`: **Configuration**. Carga configuración desde archivos YAML y variables de entorno. Usa tipos seguros para evitar errores en runtime.
-- `src/domain/`: **Domain Logic**. Contiene la lógica de negocio pura, agnóstica de la base de datos y del servidor web.
-- `src/handlers/`: **HTTP Handlers**. Controladores que reciben requests HTTP, llaman a la lógica de dominio y retornan respuestas HTTP. Son la única capa acoplada al framework web.
-- `src/routes/`: **Routing**. Define las rutas y las asocia a los handlers.
-- `src/db/`: **Database**. Abstracciones y configuración del pool de conexiones a la base de datos.
-- `src/middlewares/`: **Middlewares**. Lógica transversal como autenticación, rate limiting, etc.
-- `src/telemetry/`: **Observability**. Configuración de `tracing` para logs estructurados distribuidos.
-- `src/errors/`: **Error Handling**. Tipos de errores centralizados y mapeo a respuestas HTTP consistentes.
+- **`backend/`**: Código fuente de la API en Rust.
+  - `src/main.rs`: Entry Point, inicializa el servidor.
+  - `src/handlers/`: Controladores HTTP.
+  - `src/domain/`: Lógica de negocio pura.
+  - `src/db/`: Configuración y pool de base de datos.
+  - `migrations/`: Migraciones SQL (sqlx).
+
+- **`frontend/`**: Código del cliente (Static/SPA).
+  - `public/`: HTML/CSS/JS Assets.
+  - `vercel.json`: Configuración de deploy.
+
+- **`docker-compose.yml`**: Orquestación de servicios en local.
 
 ### Decisiones Técnicas
 
@@ -91,6 +93,10 @@ cargo test
 k6 run k6/load_test.js
 ```
 
+## Cloud Deployment
+
+Para instrucciones detalladas sobre cómo desplegar en **AWS, Azure, Render y Vercel**, consulta [DEPLOYMENT.md](./DEPLOYMENT.md).
+
 ## Estado del Proyecto
 
 Actualmente en **Fase de Inicialización**.
@@ -99,8 +105,9 @@ Actualmente en **Fase de Inicialización**.
 - [x] Dockerización optimizada
 - [x] Configuración de logging/tracing
 - [x] Conexión a BD resiliente
-- [ ] Implementación de lógica de negocio específica (Pendiente de definición)
-- [ ] Endpoints transaccionales
+- [x] Frontend de pruebas (Glassmorphism UI)
+- [x] Soporte para despliegue Cloud (AWS, Azure, Render, Vercel)
+- [ ] Endpoints transaccionales complejos
 
 ## Contribución
 

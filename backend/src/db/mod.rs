@@ -11,7 +11,7 @@ pub fn get_connection_pool(configuration: &DatabaseSettings) -> PgPool {
 }
 
 pub async fn build_connection_pool(configuration: &DatabaseSettings) -> Result<PgPool, sqlx::Error> {
-    PgPoolOptions::new()
+    let pool = PgPoolOptions::new()
         .acquire_timeout(std::time::Duration::from_secs(2))
         // Configuración para alta concurrencia
         .max_connections(100) // Límite duro de conexiones
@@ -19,5 +19,16 @@ pub async fn build_connection_pool(configuration: &DatabaseSettings) -> Result<P
         .idle_timeout(std::time::Duration::from_secs(30)) // Cerramos conexiones ociosas
         .max_lifetime(std::time::Duration::from_secs(1800)) // Rotamos conexiones cada 30 min
         .connect_with(configuration.connection_string().expose_secret().parse().unwrap())
+        .await?;
+
+    // Ejecutamos migraciones automáticamente al iniciar
+    sqlx::migrate!("./migrations")
+        .run(&pool)
         .await
+        .map_err(|e| {
+            tracing::error!("Failed to run migrations: {:?}", e);
+            e
+        })?;
+
+    Ok(pool)
 }

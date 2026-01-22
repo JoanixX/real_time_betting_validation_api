@@ -1,6 +1,5 @@
 # Rust-generated files
-/target
-/debug
+**/target/
 
 # Backup files
 **/*.rs.bk
@@ -9,8 +8,8 @@
 # Variables de entorno y secretos
 .env
 .env.*
-!.env.example.template # Por si acaso alguien usa templates
-.env.example
+!.env.example
+!.env.example.template
 
 # Editor settings
 .idea
@@ -21,3 +20,6 @@
 # OS files
 .DS_Store
 Thumbs.db
+
+# base de datos
+*.sql
