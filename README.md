@@ -8,22 +8,22 @@ Este proyecto es una base arquitectónica profesional para construir servicios b
 
 ## Arquitectura
 
-El proyecto sigue una arquitectura estratificada (Layered Architecture) para garantizar la separación de responsabilidades y la testabilidad.
+El proyecto sigue una **Arquitectura en Capas (Layered Architecture)** optimizada para el rendimiento. A diferencia de arquitecturas más pesadas como la Hexagonal completa, este enfoque minimiza el "overhead" de abstracción en Rust, permitiendo que la ruta crítica de ejecución sea lo más directa posible.
 
 ### Estructura de Carpetas (Enterprise Monorepo)
 
-- **`backend/`**: API de alto rendimiento en Rust.
-- **`frontend/`**: Cliente estático (Glassmorphism).
-- **`infrastructure/`**: Orquestación y configuración de despliegue (Docker, Nginx).
+- **`backend/`**: API de alto rendimiento en Rust (Actix-web).
+- **`frontend/`**: Cliente estático (Glassmorphism & Vanilla JS).
+- **`infrastructure/`**: Orquestación y configuración de despliegue (Docker, Docker-compose).
 - **`docs/`**: Documentación de arquitectura, decisiones técnicas (ADRs) y guías.
 - **`scripts/`**: Herramientas de automatización para CI/CD y DB.
 
-### Decisiones Técnicas
+### Decisiones Técnicas (Senior Rationales)
 
-1.  **Rust & Actix-Web**: Performance "bare-metal" y seguridad de memoria.
-2.  **Arquitectura Hexagonal**: Separación clara entre el dominio de negocio y la infraestructura.
-3.  **SQLx**: Queries verificadas en compilación.
-4.  **Observabilidad**: Tracing estructurado para depuración bajo alta carga.
+1.  **Rust & Actix-Web**: Elección basada en la necesidad de latencia cercana al metal y manejo eficiente de miles de conexiones concurrentes.
+2.  **Arquitectura en Capas**: Estrategia de "Zero Cost Abstractions" donde la lógica de negocio y la persistencia se integran de forma eficiente sin intermediarios innecesarios.
+3.  **SQLx & Connection Pooling**: Uso de `PgPool` configurado para manejar picos de tráfico sin degradación.
+4.  **Observabilidad Estructurada**: Logs en formato JSON listos para ser ingeridos por sistemas como ELK o Datadog.
 
 ---
 
