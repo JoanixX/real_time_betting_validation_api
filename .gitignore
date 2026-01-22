@@ -6,8 +6,11 @@
 **/*.rs.bk
 *.swp
 
-# Environment variables
+# Variables de entorno y secretos
 .env
+.env.*
+!.env.example.template # Por si acaso alguien usa templates
+.env.example
 
 # Editor settings
 .idea
