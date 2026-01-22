@@ -11,7 +11,7 @@ pub struct FormData {
 }
 
 #[tracing::instrument(
-    name = "Adding a new subscriber",
+    name = "Añadiendo un nuevo suscriptor",
     skip(form, pool),
     fields(
         subscriber_email = %form.email,
@@ -29,7 +29,7 @@ pub async fn subscribe(
 }
 
 #[tracing::instrument(
-    name = "Saving new subscriber details in the database",
+    name = "Guardando detalles del nuevo suscriptor en la base de datos",
     skip(form, pool)
 )]
 pub async fn insert_subscriber(
@@ -46,7 +46,7 @@ pub async fn insert_subscriber(
     .execute(pool)
     .await
     .map_err(|e| {
-        tracing::error!("Failed to execute query: {:?}", e);
+        tracing::error!("Falló la ejecución de la consulta: {:?}", e);
         e
     })?;
     Ok(())

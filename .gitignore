@@ -1,7 +1,7 @@
-# Rust-generated files
+# Archivos generados por Rust
 **/target/
 
-# Backup files
+# Archivos de respaldo
 **/*.rs.bk
 *.swp
 
@@ -11,13 +11,13 @@
 .env.example
 .env.example.template
 
-# Editor settings
+# Configuración del editor
 .idea
 .vscode
 *.iml
 *.iws
 
-# OS files
+# Archivos del SO
 .DS_Store
 Thumbs.db
 

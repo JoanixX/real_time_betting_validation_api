@@ -12,7 +12,6 @@ use actix_web::{web, App, HttpServer};
 use sqlx::PgPool;
 use std::net::TcpListener;
 use tracing_actix_web::TracingLogger;
-use tracing_actix_web::TracingLogger;
 use actix_cors::Cors;
 
 pub struct Application {
@@ -67,7 +66,6 @@ pub fn run(
             .wrap(cors)
             .wrap(TracingLogger::default()) // Middleware de Logging Estructurado
             .route("/health_check", web::get().to(handlers::health_check))
-            .configure(routes::configure_routes)
             .configure(routes::configure_routes)
             .app_data(db_pool.clone())
     })

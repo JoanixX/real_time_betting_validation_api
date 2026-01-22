@@ -26,7 +26,7 @@ pub async fn build_connection_pool(configuration: &DatabaseSettings) -> Result<P
         .run(&pool)
         .await
         .map_err(|e| {
-            tracing::error!("Failed to run migrations: {:?}", e);
+            tracing::error!("Falló la ejecución de las migraciones: {:?}", e);
             e
         })?;
 

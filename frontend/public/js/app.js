@@ -9,30 +9,30 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const API_BASE = window.API_URL || "";
 
-  // 1. Health Check
+  // 1. Verificación de Salud (Health Check)
   async function checkHealth() {
     try {
       const response = await fetch(`${API_BASE}/health_check`);
       if (response.ok) {
         statusDot.classList.add("online");
-        statusText.textContent = "API Systems Operational";
+        statusText.textContent = "Sistemas API Operativos";
       } else {
         throw new Error();
       }
     } catch (error) {
       statusDot.classList.remove("online");
-      statusText.textContent = "API connection error";
+      statusText.textContent = "Error de conexión con la API";
     }
   }
 
   checkHealth();
   setInterval(checkHealth, 30000);
 
-  // 2. Form Submission
+  // 2. Envío del Formulario
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
-    // Reset states
+    // Reiniciar estados
     formMessage.textContent = "";
     formMessage.className = "message";
     btnText.style.display = "none";
@@ -51,7 +51,7 @@ document.addEventListener("DOMContentLoaded", () => {
       });
 
       if (response.ok) {
-        formMessage.textContent = "Successfully subscribed!";
+        formMessage.textContent = "¡Suscripción exitosa!";
         formMessage.classList.add("success");
         form.reset();
       } else {
@@ -60,7 +60,7 @@ document.addEventListener("DOMContentLoaded", () => {
         formMessage.classList.add("error");
       }
     } catch (error) {
-      formMessage.textContent = "Network error. Please try again.";
+      formMessage.textContent = "Error de red. Por favor, intenta de nuevo.";
       formMessage.classList.add("error");
     } finally {
       btnText.style.display = "inline-block";
@@ -69,7 +69,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // Subtle parallax effect on blobs
+  // Efecto parallax sutil en las burbujas de fondo
   document.addEventListener("mousemove", (e) => {
     const x = e.clientX / window.innerWidth;
     const y = e.clientY / window.innerHeight;
