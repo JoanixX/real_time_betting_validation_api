@@ -13,6 +13,7 @@ use sqlx::PgPool;
 use std::net::TcpListener;
 use tracing_actix_web::TracingLogger;
 use actix_cors::Cors;
+use redis::Client;
 
 pub struct Application {
     port: u16,
@@ -25,6 +26,10 @@ impl Application {
         let connection_pool = db::build_connection_pool(&configuration.database).await
             .expect("Falló la conexión a Postgres.");
 
+        // Inicializamos Redis
+        let redis_client = Client::open(configuration.redis.connection_string())
+            .expect("Falló al crear cliente Redis");
+
         // Definimos la dirección y puerto
         let address = format!(
             "{}:{}",
@@ -34,7 +39,7 @@ impl Application {
         let port = listener.local_addr().unwrap().port();
         
         // Arrancamos el servidor
-        let server = run(listener, connection_pool)?;
+        let server = run(listener, connection_pool, redis_client)?;
 
         Ok(Self { port, server })
     }
@@ -51,9 +56,11 @@ impl Application {
 pub fn run(
     listener: TcpListener,
     db_pool: PgPool,
+    redis_client: Client,
 ) -> Result<Server, std::io::Error> {
     // Envolvemos el pool en un Data arc para compartirlo entre threads de actix
     let db_pool = web::Data::new(db_pool);
+    let redis_client = web::Data::new(redis_client);
     
     let server = HttpServer::new(move || {
         let cors = Cors::default()
@@ -68,6 +75,7 @@ pub fn run(
             .route("/health_check", web::get().to(handlers::health_check))
             .configure(routes::configure_routes)
             .app_data(db_pool.clone())
+            .app_data(redis_client.clone())
     })
     .listen(listener)?
     .run();

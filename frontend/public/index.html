@@ -38,31 +38,55 @@
 
       <section class="main-content">
         <div class="form-card">
-          <h2>New Subscription</h2>
-          <p>Register a new user to the system database.</p>
-          <form id="subscribe-form">
+          <h2>Bet Simulator</h2>
+          <p>Simulate a high-frequency bet transaction.</p>
+          <form id="bet-form">
             <div class="input-group">
-              <label for="name">Full Name</label>
+              <label for="user_id">User UUID</label>
               <input
                 type="text"
-                id="name"
-                name="name"
-                placeholder="John Doe"
+                id="user_id"
+                name="user_id"
+                placeholder="e.g. 550e8400-e29b-41d4-a716-446655440000"
                 required
               />
             </div>
             <div class="input-group">
-              <label for="email">Email Address</label>
+              <label for="match_id">Match UUID</label>
               <input
-                type="email"
-                id="email"
-                name="email"
-                placeholder="john@example.com"
+                type="text"
+                id="match_id"
+                name="match_id"
+                placeholder="e.g. 123e4567-e89b-12d3-a456-426614174000"
                 required
               />
             </div>
+            <div class="row">
+              <div class="input-group">
+                <label for="amount">Amount ($)</label>
+                <input
+                  type="number"
+                  id="amount"
+                  name="amount"
+                  placeholder="100.00"
+                  step="0.01"
+                  required
+                />
+              </div>
+              <div class="input-group">
+                <label for="odds">Odds</label>
+                <input
+                  type="number"
+                  id="odds"
+                  name="odds"
+                  placeholder="1.50"
+                  step="0.01"
+                  required
+                />
+              </div>
+            </div>
             <button type="submit" id="submit-btn" class="btn-primary">
-              <span class="btn-text">Register Now</span>
+              <span class="btn-text">Place Bet</span>
               <div class="loader-small" hidden></div>
             </button>
             <div id="form-message" class="message"></div>

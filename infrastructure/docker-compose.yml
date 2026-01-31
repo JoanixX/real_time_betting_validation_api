@@ -14,6 +14,14 @@ services:
     networks:
       - backend_network
 
+  redis:
+    image: redis:7-alpine
+    restart: always
+    ports:
+      - "6379:6379"
+    networks:
+      - backend_network
+
   app:
     build:
       context: ../backend

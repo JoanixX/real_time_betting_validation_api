@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
-  const form = document.getElementById("subscribe-form");
+  const form = document.getElementById("bet-form");
   const statusDot = document.querySelector(".status-dot");
   const statusText = document.querySelector(".status-text");
   const formMessage = document.getElementById("form-message");
@@ -15,13 +15,13 @@ document.addEventListener("DOMContentLoaded", () => {
       const response = await fetch(`${API_BASE}/health_check`);
       if (response.ok) {
         statusDot.classList.add("online");
-        statusText.textContent = "Sistemas API Operativos";
+        statusText.textContent = "Validation API Online";
       } else {
         throw new Error();
       }
     } catch (error) {
       statusDot.classList.remove("online");
-      statusText.textContent = "Error de conexión con la API";
+      statusText.textContent = "API Disconnected";
     }
   }
 
@@ -39,28 +39,40 @@ document.addEventListener("DOMContentLoaded", () => {
     loader.hidden = false;
     submitBtn.disabled = true;
 
-    const formData = new URLSearchParams(new FormData(form));
+    // Obtener valores manuales para construir JSON
+    const userId = document.getElementById("user_id").value;
+    const matchId = document.getElementById("match_id").value;
+    const amount = parseFloat(document.getElementById("amount").value);
+    const odds = parseFloat(document.getElementById("odds").value);
+
+    const payload = {
+      user_id: userId,
+      match_id: matchId,
+      amount: amount,
+      odds: odds,
+    };
 
     try {
-      const response = await fetch(`${API_BASE}/subscriptions`, {
+      const response = await fetch(`${API_BASE}/bets`, {
         method: "POST",
-        body: formData,
+        body: JSON.stringify(payload),
         headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
+          "Content-Type": "application/json",
         },
       });
 
       if (response.ok) {
-        formMessage.textContent = "¡Suscripción exitosa!";
+        const data = await response.json();
+        formMessage.textContent = `Bet Validated! Ticket: ${data.user_id.slice(0, 8)}...`;
         formMessage.classList.add("success");
-        form.reset();
+        // No reseteamos todo el form para facilitar testing rapido
       } else {
-        const errorData = await response.text();
-        formMessage.textContent = `Error: ${response.statusText}`;
+        formMessage.textContent = `Rejected: ${response.statusText}`;
         formMessage.classList.add("error");
       }
     } catch (error) {
-      formMessage.textContent = "Error de red. Por favor, intenta de nuevo.";
+      console.error(error);
+      formMessage.textContent = "Network Error";
       formMessage.classList.add("error");
     } finally {
       btnText.style.display = "inline-block";
