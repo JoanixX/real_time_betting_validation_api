@@ -23,3 +23,6 @@ Thumbs.db
 
 # base de datos
 *.sql
+
+# Docker
+infrastructure/docker-compose.prod.yml
