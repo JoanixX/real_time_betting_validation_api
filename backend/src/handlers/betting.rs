@@ -14,7 +14,7 @@ pub struct ValidateBetRequest {
 
 #[tracing::instrument(
     name = "Validating a new bet",
-    skip(item, pool),
+    skip(item, pool, cache),
     fields(
         user_id = %item.user_id,
         match_id = %item.match_id
@@ -23,6 +23,7 @@ pub struct ValidateBetRequest {
 pub async fn validate_bet(
     item: web::Json<ValidateBetRequest>,
     pool: web::Data<PgPool>,
+    cache: web::Data<crate::db::cache::CacheStore>,
 ) -> HttpResponse {
     let ticket = BetTicket {
         user_id: item.user_id,
@@ -53,6 +54,14 @@ pub async fn validate_bet(
     {
         Ok(_) => {
             tracing::info!("Bet validated and stored successfully");
+            
+            // Ejemplo de uso de Cache para Alta Concurrencia:
+            // Guardamos el ID de la última apuesta por 60 segundos
+            let cache_key = format!("last_bet:{}", ticket.user_id);
+            if let Err(e) = cache.set(&cache_key, &bet_id.to_string(), 60).await {
+                tracing::warn!("Failed to update cache: {:?}", e);
+            }
+
             HttpResponse::Ok().json(ticket)
         },
         Err(e) => {

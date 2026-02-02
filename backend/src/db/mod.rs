@@ -32,3 +32,5 @@ pub async fn build_connection_pool(configuration: &DatabaseSettings) -> Result<P
 
     Ok(pool)
 }
+
+pub mod cache;

@@ -16,11 +16,17 @@ pub struct RedisSettings {
     pub host: String,
     #[serde(deserialize_with = "deserialize_number_from_string")]
     pub port: u16,
+    pub upstash_redis_rest_url: Option<String>,
+    pub upstash_redis_rest_token: Option<Secret<String>>,
 }
 
 impl RedisSettings {
     pub fn connection_string(&self) -> String {
         format!("redis://{}:{}", self.host, self.port)
+    }
+
+    pub fn use_upstash(&self) -> bool {
+        self.upstash_redis_rest_url.is_some() && self.upstash_redis_rest_token.is_some()
     }
 }
 
