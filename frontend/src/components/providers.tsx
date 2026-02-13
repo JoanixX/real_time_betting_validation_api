@@ -5,7 +5,7 @@ import { useState, type ReactNode } from 'react';
 
 // staletime por tipo de data
 export const QUERY_STALE_TIMES = {
-  // refrescamos seguido
+  // Refrescamos seguido
   HEALTH_CHECK: 30_000,
   //5 minutos, se invalida al colocar apuesta
   BET_HISTORY: 5 * 60 * 1_000,
@@ -20,7 +20,7 @@ export function QueryProvider({ children }: { children: ReactNode }) {
       new QueryClient({
         defaultOptions: {
           queries: {
-            // conservador
+            // Conservador
             refetchOnWindowFocus: false,
             retry: 1,
             staleTime: QUERY_STALE_TIMES.HEALTH_CHECK,
