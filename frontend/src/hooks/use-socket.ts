@@ -1,83 +1,62 @@
 'use client';
 
-import { useEffect, useRef, useCallback, useState } from 'react';
-import { getSocket, disconnectSocket } from '@/lib/socket';
-import type { WSEvent } from '@/types/domain';
+import { useEffect, useCallback, useState } from 'react';
+import { getSocketClient, type ConnectionState } from '@/lib/socket';
+import { useOddsStore } from '@/store/odds-store';
+import { useBettingStore } from '@/store/betting-store';
 
 interface UseSocketOptions {
-  // si se conecta automáticamente al montar
   autoConnect?: boolean;
-  // handler para todos los eventos del backend
-  onEvent?: (event: WSEvent) => void;
-  // handlers de conexión
-  onConnect?: () => void;
-  onDisconnect?: () => void;
-  onError?: (error: Error) => void;
 }
 
+// hook central que conecta el WebSocket y routea eventos a los stores
 export function useSocket(options: UseSocketOptions = {}) {
-  const {
-    autoConnect = true,
-    onEvent,
-    onConnect,
-    onDisconnect,
-    onError,
-  } = options;
+  const { autoConnect = true } = options;
+  const [connectionState, setConnectionState] = useState<ConnectionState>('disconnected');
 
-  const [isConnected, setIsConnected] = useState(false);
-  const eventHandlerRef = useRef(onEvent);
-  eventHandlerRef.current = onEvent;
+  const updateOdds = useOddsStore((s) => s.updateOdds);
+  const resolveBet = useBettingStore((s) => s.resolveBet);
 
   const connect = useCallback(() => {
-    const socket = getSocket();
-    if (!socket.connected) {
-      socket.connect();
-    }
+    getSocketClient().connect();
   }, []);
 
   const disconnect = useCallback(() => {
-    disconnectSocket();
-    setIsConnected(false);
+    getSocketClient().disconnect();
   }, []);
 
   useEffect(() => {
-    const socket = getSocket();
+    const client = getSocketClient();
 
-    const handleConnect = () => {
-      setIsConnected(true);
-      onConnect?.();
-    };
+    // estado de conexión
+    const unsubState = client.onStateChange(setConnectionState);
 
-    const handleDisconnect = () => {
-      setIsConnected(false);
-      onDisconnect?.();
-    };
+    // pipeline WS va a zustand y actualiza odds
+    const unsubOdds = client.on('odds:updated', (payload) => {
+      updateOdds(payload.match_id, payload.odds);
+    });
 
-    const handleError = (error: Error) => {
-      onError?.(error);
-    };
+    // pipeline WS va a zustand y actualiza apuesta confirmada
+    const unsubValidated = client.on('bet:validated', (payload) => {
+      resolveBet(payload.bet_id, 'Validated');
+    });
 
-    // evento genérico del backend — todos los eventos pasan por acá
-    const handleEvent = (event: WSEvent) => {
-      eventHandlerRef.current?.(event);
-    };
-
-    socket.on('connect', handleConnect);
-    socket.on('disconnect', handleDisconnect);
-    socket.on('connect_error', handleError);
-    socket.on('event', handleEvent);
+    // pipeline WS va a zustand y actualiza apuesta rechazada
+    const unsubRejected = client.on('bet:rejected', (payload) => {
+      resolveBet(payload.bet_id, 'Rejected');
+    });
 
     if (autoConnect) {
-      socket.connect();
+      client.connect();
     }
 
     return () => {
-      socket.off('connect', handleConnect);
-      socket.off('disconnect', handleDisconnect);
-      socket.off('connect_error', handleError);
-      socket.off('event', handleEvent);
+      unsubState();
+      unsubOdds();
+      unsubValidated();
+      unsubRejected();
     };
-  }, [autoConnect, onConnect, onDisconnect, onError]);
+  }, [autoConnect, updateOdds, resolveBet]);
 
-  return { isConnected, connect, disconnect };
+  return { connectionState, isConnected: connectionState === 'connected', connect, disconnect };
 }

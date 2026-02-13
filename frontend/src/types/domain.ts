@@ -19,6 +19,23 @@ export interface ValidateBetRequest {
 
 export type ValidateBetResponse = BetTicket;
 
+// guardamos el historial de apuestas (REST)
+export interface BetHistoryEntry {
+  bet_id: string;
+  user_id: string;
+  match_id: string;
+  amount: number;
+  odds: number;
+  status: BetStatus;
+  created_at: string; // ISO 8601
+}
+
+// respuesta al colocar apuesta (REST)
+export interface PlaceBetResponse {
+  bet_id: string;
+  status: BetStatus;
+}
+
 // Usuarios
 export interface User {
   id: string;
@@ -45,7 +62,6 @@ export interface AuthResponse {
 }
 
 // Sistema
-
 export interface HealthCheckResponse {
   status: 'ok';
 }
@@ -54,18 +70,34 @@ export interface ActivityLogEntry {
   timestamp: string;
   amount: number;
   latency_ms: number;
+  status?: BetStatus;
 }
 
 // Eventos de Websocket
-export type WSEventType = 
+export type WSEventType =
   | 'bet:validated'
   | 'bet:rejected'
   | 'odds:updated'
   | 'match:status_changed';
 
-export interface WSBetEvent {
-  type: 'bet:validated' | 'bet:rejected';
-  payload: BetTicket & { status: BetStatus };
+// Payload compartido de eventos de apuesta
+export interface BetEventPayload {
+  bet_id: string;
+  user_id: string;
+  match_id: string;
+  amount: number;
+  odds: number;
+  status: BetStatus;
+}
+
+export interface WSBetValidatedEvent {
+  type: 'bet:validated';
+  payload: BetEventPayload;
+}
+
+export interface WSBetRejectedEvent {
+  type: 'bet:rejected';
+  payload: BetEventPayload;
 }
 
 export interface WSOddsUpdate {
@@ -73,6 +105,7 @@ export interface WSOddsUpdate {
   payload: {
     match_id: string;
     odds: number;
+    timestamp: number;
   };
 }
 
@@ -86,4 +119,12 @@ export interface WSMatchStatusEvent {
   };
 }
 
-export type WSEvent = WSBetEvent | WSOddsUpdate | WSMatchStatusEvent;
+export type WSEvent = WSBetValidatedEvent | WSBetRejectedEvent | WSOddsUpdate | WSMatchStatusEvent;
+
+// mapa de evento que va a ser el payload para tipado estricto del event emitter
+export interface WSEventPayloadMap {
+  'bet:validated': BetEventPayload;
+  'bet:rejected': BetEventPayload;
+  'odds:updated': WSOddsUpdate['payload'];
+  'match:status_changed': WSMatchStatusEvent['payload'];
+}
