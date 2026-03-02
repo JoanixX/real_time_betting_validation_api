@@ -32,8 +32,8 @@ Thumbs.db
 # Node
 **/node_modules/
 
-# Guías internas con credenciales
-docs/guia.md
-
 # instrucciones privadas del asistente de IA
 Instrucciones.md
+
+# script generador de secretos (contiene lógica sensible)
+scripts/generate_secrets.py
