@@ -67,7 +67,7 @@ El build utiliza `output: 'standalone'` para generar un contenedor autocontenido
 
 ## ⚙️ Variables de Entorno
 
-Crear un archivo `.env.local` en la carpeta `frontend/`:
+Crear un archivo `.env` en la carpeta `frontend/`:
 
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:8000

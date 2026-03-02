@@ -82,7 +82,7 @@ pub fn get_configuration() -> Result<Settings, config::ConfigError> {
         .expect("Falló al parsear APP_ENVIRONMENT.");
 
     let env_file = match environment {
-        Environment::Local => ".env.local",
+        Environment::Local => ".env",
         Environment::Production => ".env.production",
     };
     let env_path = base_path.join(env_file);
