@@ -14,52 +14,22 @@ Este proyecto no es solo una API CRUD; es un ejercicio de ingeniería de rendimi
 
 ## 🛠️ Stack Tecnológico
 
-- **Backend**: Rust (Actix-Web, SQLx, Redis-RS).
-- **Caché**: Redis Alpine (Capa de validación rápida).
-- **Persistencia**: PostgreSQL.
+- **Backend**: Rust (Actix-Web, SQLx, Redis-RS). Ver [`backend/README.md`](backend/README.md) para detalles de arquitectura.
+- **Caché**: Redis / Upstash (capa de validación rápida).
+- **Persistencia**: PostgreSQL (Neon en producción).
 - **Infraestructura**: Docker Compose.
 - **Testing de Carga**: k6 (Grafana).
-- **Frontend**: Next.js 14 (Dashboard de métricas y simulador en tiempo real).
+- **Frontend**: Next.js 14 (Dashboard de métricas y simulador en tiempo real). Ver [`frontend/README.md`](frontend/README.md).
 
-## 🏛️ Arquitectura Hexagonal
-
-```
-backend/src/
-├── domain/                   ← CORE: cero deps de framework
-│   ├── models.rs             (entidades: BetTicket, User, BetStatus)
-│   ├── errors.rs             (errores de dominio tipados)
-│   └── ports.rs              (traits: BetRepository, UserRepository, CachePort, PasswordHasher)
-├── application/              ← CASOS DE USO: orquestan lógica via ports
-│   ├── place_bet.rs          (validar + persistir apuesta)
-│   ├── register_user.rs      (hashear + persistir usuario)
-│   └── login_user.rs         (verificar credenciales)
-├── infrastructure/           ← ADAPTADORES SECUNDARIOS (driven)
-│   ├── persistence/          (Postgres: implementa BetRepository, UserRepository)
-│   ├── cache/                (Redis/Upstash: implementa CachePort)
-│   ├── security/             (Argon2: implementa PasswordHasher)
-│   └── database.rs           (pool de conexiones)
-├── handlers/                 ← ADAPTADORES PRIMARIOS (driving)
-│   ├── dto.rs                (request/response DTOs HTTP)
-│   ├── betting.rs            (HTTP → PlaceBetUseCase → HTTP)
-│   └── auth.rs               (HTTP → RegisterUser/LoginUser → HTTP)
-├── errors/                   ← mapeo DomainError → HTTP
-├── config/                   ← configuración multi-entorno
-├── telemetry/                ← tracing estructurado (Bunyan JSON)
-└── lib.rs                    ← composition root (DI)
-```
-
-### Flujo de una Apuesta
+## 📂 Estructura del Monorepo
 
 ```
-HTTP POST /bets
-  → handlers/betting.rs (parsea DTO, traduce a BetTicket)
-    → application/place_bet.rs (valida reglas de dominio)
-      → domain/ports::BetRepository.save() (trait)
-        → infrastructure/persistence/bet_repository.rs (INSERT SQL)
-      → domain/ports::CachePort.set() (trait)
-        → infrastructure/cache/ (Redis SET)
-    ← PlaceBetResult
-  ← HttpResponse::Ok(PlaceBetResponse)
+real_time_betting_validation_api/
+├── backend/                  ← API en Rust (Actix-Web, Arquitectura Hexagonal)
+├── frontend/                 ← Next.js 14 (App Router, Zustand, TanStack Query)
+├── infrastructure/           ← Docker Compose para servicios locales
+├── scripts/                  ← Scripts de utilidad (setup de BD, etc.)
+└── README.md                 ← Este archivo
 ```
 
 ## 📊 Simulación & Pruebas de Estrés
@@ -98,6 +68,15 @@ Para validar que el sistema soporta miles de peticiones por segundo:
 cd backend/k6
 k6 run load_test.js
 ```
+
+## ⚙️ Variables de Entorno
+
+Cada servicio tiene su propio `.env.example` con la plantilla de variables necesarias:
+
+- **Backend**: `backend/.env.example`
+- **Frontend**: `frontend/.env.example`
+
+Copiar como `.env` (local) o `.env.production` (producción) y rellenar con los valores reales.
 
 ---
 
