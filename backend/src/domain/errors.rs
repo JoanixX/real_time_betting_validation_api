@@ -1,7 +1,9 @@
-// errores de dominio sin dependencias de framework (actix, sqlx, etc)
-// el mapeo a http se hace en el adaptador de errores
+// errores de dominio puros
+// los errores de infraestructura (como sqlx) se manejan en los adaptadores
 
 use thiserror::Error;
+use super::models::{MatchId, MatchStatus, Odds};
+use super::money::Money;
 
 #[derive(Debug, Error)]
 pub enum DomainError {
@@ -19,22 +21,17 @@ pub enum DomainError {
 
     #[error("error interno: {0}")]
     Internal(String),
-}
 
-// Conversión desde sqlx para usar en adaptadores de persistencia
-impl From<sqlx::Error> for DomainError {
-    fn from(e: sqlx::Error) -> Self {
-        match e {
-            sqlx::Error::RowNotFound => DomainError::NotFound,
-            sqlx::Error::Database(ref db_err) => {
-                // se usa el código 23505, que es para una unique_violation en postgres
-                if db_err.code().map_or(false, |c| c == "23505") {
-                    DomainError::Duplicate(db_err.message().to_string())
-                } else {
-                    DomainError::Internal(e.to_string())
-                }
-            }
-            _ => DomainError::Internal(e.to_string()),
-        }
-    }
+    // Nuevos errores de negocio específicos
+    #[error("saldo insuficiente. disponible: {available:?}, requerido: {required:?}")]
+    InsufficientFunds { available: Money, required: Money },
+
+    #[error("el partido no está activo. estado actual: {status:?}")]
+    MatchNotActive { match_id: MatchId, status: MatchStatus },
+
+    #[error("las cuotas han cambiado. solicitadas: {requested:?}, actuales: {current:?}")]
+    OddsChanged { requested: Odds, current: Odds },
+
+    #[error("monto de apuesta inválido: {0}")]
+    InvalidAmount(String),
 }

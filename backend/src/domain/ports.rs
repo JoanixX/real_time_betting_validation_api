@@ -1,23 +1,24 @@
 // traits que definen las interfaces, el dominio y los casos
-// de uso dependen de los traits y las implementaciones 
+// de uso dependen de los traits y las implementaciones
 // concretas van en la carpeta infrastructure
 
 use async_trait::async_trait;
 use uuid::Uuid;
-use super::models::{BetTicket, User, BetStatus};
+
 use super::errors::DomainError;
+use super::models::{Bet, BetId, BetStatus, SportMatch, MatchId, UserId};
 
 // Puerto de apuestas
 #[async_trait]
 pub trait BetRepository: Send + Sync {
-    async fn save(
-        &self,
-        id: Uuid,
-        ticket: &BetTicket,
-        status: &BetStatus,
-    ) -> Result<(), DomainError>;
+    async fn save(&self, bet: &Bet) -> Result<(), DomainError>;
+    async fn find_by_id(&self, id: BetId) -> Result<Option<Bet>, DomainError>;
+}
 
-    async fn find_by_id(&self, id: Uuid) -> Result<Option<BetTicket>, DomainError>;
+// Puerto de partidos y cuotas (nuevo para soportar la validación)
+#[async_trait]
+pub trait MatchRepository: Send + Sync {
+    async fn find_by_id(&self, id: MatchId) -> Result<Option<SportMatch>, DomainError>;
 }
 
 // Puerto de usuarios
@@ -25,13 +26,15 @@ pub trait BetRepository: Send + Sync {
 pub trait UserRepository: Send + Sync {
     async fn save(
         &self,
-        id: Uuid,
+        id: UserId,
         email: &str,
         password_hash: &str,
         name: &str,
     ) -> Result<(), DomainError>;
 
     async fn find_by_email(&self, email: &str) -> Result<Option<UserRecord>, DomainError>;
+    // se necesita para la validacion financiera
+    async fn get_balance(&self, id: UserId) -> Result<crate::domain::Money, DomainError>;
 }
 
 // registro devuelto por el repositorio con hash
