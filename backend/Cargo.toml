@@ -60,7 +60,7 @@ validator = { version = "0.16", features = ["derive"] }
 # métricas prometheus (opcional, útil para alta concurrencia)
 actix-web-prom = "0.6"
 argon2 = { version = "0.5", features = ["std"] }
-
+deadpool-redis = "0.14"
 [dev-dependencies]
 reqwest = { version = "0.11", features = ["json"] }
 wiremock = "0.5"
