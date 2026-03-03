@@ -58,9 +58,16 @@ pub fn domain_error_to_response(error: DomainError) -> HttpResponse {
         }
         DomainError::Internal(msg) => {
             // logueamos el error real pero no lo exponemos al cliente
-            tracing::error!("error interno: {}", msg);
+            tracing::error!("Error interno: {}", msg);
             HttpResponse::InternalServerError().json(serde_json::json!({
                 "error": "Error interno del servidor"
+            }))
+        }
+        DomainError::InfrastructureError(msg) => {
+            // logueamos el error de la infraestructura redis
+            tracing::error!("Error de infraestructura: {}", msg);
+            HttpResponse::InternalServerError().json(serde_json::json!({
+                "error": "Ocurrió un error procesando la transacción"
             }))
         }
     }

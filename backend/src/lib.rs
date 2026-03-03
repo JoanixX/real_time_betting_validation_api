@@ -20,6 +20,7 @@ use crate::infrastructure::database;
 use crate::infrastructure::cache::RedisCacheAdapter;
 use crate::infrastructure::persistence::bet_repository::PostgresBetRepository;
 use crate::infrastructure::persistence::user_repository::PostgresUserRepository;
+use crate::infrastructure::redis_repo::RedisBettingStateRepository;
 // es temporal para hacer compilar la inyección, esto idealmente 
 // viviría en un modulo propio
 struct PostgresMatchRepository;
@@ -44,19 +45,26 @@ impl Application {
         // adaptadores secundarios (infraestructura)
         let connection_pool = database::build_connection_pool(&configuration.database)
             .await
-            .expect("falló la conexión a postgres");
+            .expect("Falló la conexión a postgres");
 
         let cache = RedisCacheAdapter::build(&configuration.redis);
 
+        // pool de redis dedicado para alta concurrencia
+        let redis_pool_config = deadpool_redis::Config::from_url(configuration.redis.connection_string());
+        let redis_pool = redis_pool_config
+            .create_pool(Some(deadpool_redis::Runtime::Tokio1))
+            .expect("Falló la creación del pool de redis");
+
         // inyección de dependencias
         // Construimos los casos de uso con sus puertos
-        let bet_repo = Arc::new(PostgresBetRepository::new(connection_pool.clone()));
-        let match_repo = Arc::new(PostgresMatchRepository);
+        let _bet_repo = Arc::new(PostgresBetRepository::new(connection_pool.clone())); // aun disponible si otro UC lo necesita
+        let _match_repo = Arc::new(PostgresMatchRepository);
         let user_repo = Arc::new(PostgresUserRepository::new(connection_pool.clone()));
         let hasher = Arc::new(Argon2Hasher::new());
         let cache_port: Arc<dyn domain::ports::CachePort> = Arc::new(cache);
+        let bet_state_repo = Arc::new(RedisBettingStateRepository::new(redis_pool));
 
-        let place_bet_uc = PlaceBetUseCase::new(bet_repo, match_repo, user_repo.clone(), cache_port);
+        let place_bet_uc = PlaceBetUseCase::new(bet_state_repo, cache_port);
         let register_uc = RegisterUserUseCase::new(user_repo.clone(), hasher.clone());
         let login_uc = LoginUserUseCase::new(user_repo, hasher);
 
