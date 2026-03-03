@@ -35,6 +35,9 @@ use crate::infrastructure::security::Argon2Hasher;
 // casos de uso
 use crate::application::{PlaceBetUseCase, RegisterUserUseCase, LoginUserUseCase};
 
+// web sockets
+use crate::handlers::ws::manager::ConnectionManager;
+
 pub struct Application {
     port: u16,
     server: Server,
@@ -68,6 +71,8 @@ impl Application {
         let register_uc = RegisterUserUseCase::new(user_repo.clone(), hasher.clone());
         let login_uc = LoginUserUseCase::new(user_repo, hasher);
 
+        let ws_manager = ConnectionManager::new();
+
         // direccion y puerto donde escucha el servidor
         let address = format!(
             "{}:{}",
@@ -76,7 +81,7 @@ impl Application {
         let listener = TcpListener::bind(address)?;
         let port = listener.local_addr().unwrap().port();
 
-        let server = run(listener, place_bet_uc, register_uc, login_uc)?;
+        let server = run(listener, place_bet_uc, register_uc, login_uc, ws_manager)?;
 
         Ok(Self { port, server })
     }
@@ -95,11 +100,13 @@ pub fn run(
     place_bet_uc: PlaceBetUseCase,
     register_uc: RegisterUserUseCase,
     login_uc: LoginUserUseCase,
+    ws_manager: ConnectionManager,
 ) -> Result<Server, std::io::Error> {
     // envolvemos los casos de uso en Data para compartir entre threads de actix
     let place_bet_uc = web::Data::new(place_bet_uc);
     let register_uc = web::Data::new(register_uc);
     let login_uc = web::Data::new(login_uc);
+    let ws_manager = web::Data::new(ws_manager);
 
     let server = HttpServer::new(move || {
         let cors = Cors::default()
@@ -115,6 +122,7 @@ pub fn run(
             .app_data(place_bet_uc.clone())
             .app_data(register_uc.clone())
             .app_data(login_uc.clone())
+            .app_data(ws_manager.clone())
     })
     .listen(listener)?
     .run();
