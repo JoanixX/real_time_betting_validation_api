@@ -21,7 +21,7 @@ Este proyecto no es solo una API CRUD; es un ejercicio de ingeniería de rendimi
 - **Persistencia**: PostgreSQL (Neon en producción).
 - **Infraestructura**: Docker Compose.
 - **Testing de Carga**: k6 (Grafana).
-- **Frontend**: Next.js 14 (Dashboard de métricas y simulador en tiempo real). Ver [`frontend/README.md`](frontend/README.md).
+- **Frontend UI**: Next.js 14 (App Router) y Zustand O(1) con Patrón _Snapshot+Delta_ acoplado a WS puro y _Zero React Renders_ para feedback HFT. Ver [`frontend/README.md`](frontend/README.md).
 
 ## 📂 Estructura del Monorepo
 
@@ -53,7 +53,7 @@ cargo run --release
 
 ### 3. Simulador UI (Frontend)
 
-El simulador permite enviar apuestas manualmente y observar la latencia en tiempo real.
+El dashboard interactivo provee un cliente de Real-Time Betting alimentado del Motor (Snapshot REST + Delta Websocket), probando el feedback High Frequency.
 
 ```bash
 cd frontend
