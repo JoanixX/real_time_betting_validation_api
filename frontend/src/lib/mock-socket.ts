@@ -1,5 +1,6 @@
 import { useOddsStore } from '@/store/odds-store';
 import type { MatchStatus } from '@/types/domain';
+import { MATCH_STATUS } from '@/lib/constants';
 
 // Datos mock de partidos sin backend, solo simulacion
 export interface MockMatch {
@@ -12,14 +13,14 @@ export interface MockMatch {
 }
 
 const MOCK_MATCHES: MockMatch[] = [
-  { id: 'match-001', home_team: 'Real Madrid', away_team: 'FC Barcelona', status: 'live', start_time: new Date().toISOString(), base_odds: 1.85 },
-  { id: 'match-002', home_team: 'Manchester City', away_team: 'Liverpool', status: 'live', start_time: new Date().toISOString(), base_odds: 2.10 },
-  { id: 'match-003', home_team: 'Bayern Munich', away_team: 'Borussia Dortmund', status: 'live', start_time: new Date().toISOString(), base_odds: 1.65 },
-  { id: 'match-004', home_team: 'PSG', away_team: 'Olympique Marseille', status: 'live', start_time: new Date().toISOString(), base_odds: 1.45 },
-  { id: 'match-005', home_team: 'Juventus', away_team: 'AC Milan', status: 'live', start_time: new Date().toISOString(), base_odds: 2.35 },
-  { id: 'match-006', home_team: 'Ajax', away_team: 'Feyenoord', status: 'upcoming', start_time: new Date().toISOString(), base_odds: 1.95 },
-  { id: 'match-007', home_team: 'Boca Juniors', away_team: 'River Plate', status: 'live', start_time: new Date().toISOString(), base_odds: 2.50 },
-  { id: 'match-008', home_team: 'Flamengo', away_team: 'Palmeiras', status: 'live', start_time: new Date().toISOString(), base_odds: 1.75 },
+  { id: 'match-001', home_team: 'Real Madrid', away_team: 'FC Barcelona', status: MATCH_STATUS.IN_PLAY, start_time: new Date().toISOString(), base_odds: 1.85 },
+  { id: 'match-002', home_team: 'Manchester City', away_team: 'Liverpool', status: MATCH_STATUS.IN_PLAY, start_time: new Date().toISOString(), base_odds: 2.10 },
+  { id: 'match-003', home_team: 'Bayern Munich', away_team: 'Borussia Dortmund', status: MATCH_STATUS.IN_PLAY, start_time: new Date().toISOString(), base_odds: 1.65 },
+  { id: 'match-004', home_team: 'PSG', away_team: 'Olympique Marseille', status: MATCH_STATUS.IN_PLAY, start_time: new Date().toISOString(), base_odds: 1.45 },
+  { id: 'match-005', home_team: 'Juventus', away_team: 'AC Milan', status: MATCH_STATUS.IN_PLAY, start_time: new Date().toISOString(), base_odds: 2.35 },
+  { id: 'match-006', home_team: 'Ajax', away_team: 'Feyenoord', status: MATCH_STATUS.NOT_STARTED, start_time: new Date().toISOString(), base_odds: 1.95 },
+  { id: 'match-007', home_team: 'Boca Juniors', away_team: 'River Plate', status: MATCH_STATUS.IN_PLAY, start_time: new Date().toISOString(), base_odds: 2.50 },
+  { id: 'match-008', home_team: 'Flamengo', away_team: 'Palmeiras', status: MATCH_STATUS.IN_PLAY, start_time: new Date().toISOString(), base_odds: 1.75 },
 ];
 
 // Genera una variacion pseudoaleatoria de odds
@@ -51,7 +52,7 @@ export function startMockOddsStream(): () => void {
       const count = 1 + Math.floor(Math.random() * 3);
       for (let i = 0; i < count; i++) {
         const match = MOCK_MATCHES[Math.floor(Math.random() * MOCK_MATCHES.length)];
-        if (match.status !== 'live') continue;
+        if (match.status !== MATCH_STATUS.IN_PLAY) continue;
 
         const current = currentOdds.get(match.id) ?? match.base_odds;
         const newOdds = jitterOdds(current);

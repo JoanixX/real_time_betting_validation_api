@@ -4,6 +4,7 @@ import { useEffect, useCallback, useState } from 'react';
 import { getSocketClient, type ConnectionState } from '@/lib/socket';
 import { useOddsStore } from '@/store/odds-store';
 import { useBettingStore } from '@/store/betting-store';
+import { WS_EVENTS, BET_STATUS } from '@/lib/constants';
 
 interface UseSocketOptions {
   autoConnect?: boolean;
@@ -32,18 +33,18 @@ export function useSocket(options: UseSocketOptions = {}) {
     const unsubState = client.onStateChange(setConnectionState);
 
     // pipeline WS va a zustand y actualiza odds
-    const unsubOdds = client.on('odds:updated', (payload) => {
+    const unsubOdds = client.on(WS_EVENTS.ODDS_UPDATED, (payload) => {
       updateOdds(payload.match_id, payload.odds);
     });
 
     // pipeline WS va a zustand y actualiza apuesta confirmada
-    const unsubValidated = client.on('bet:validated', (payload) => {
-      resolveBet(payload.bet_id, 'Validated');
+    const unsubValidated = client.on(WS_EVENTS.BET_ACCEPTED, (payload) => {
+      resolveBet(payload.bet_id, BET_STATUS.ACCEPTED);
     });
 
     // pipeline WS va a zustand y actualiza apuesta rechazada
-    const unsubRejected = client.on('bet:rejected', (payload) => {
-      resolveBet(payload.bet_id, 'Rejected');
+    const unsubRejected = client.on(WS_EVENTS.BET_REJECTED, (payload) => {
+      resolveBet(payload.bet_id, BET_STATUS.REJECTED);
     });
 
     if (autoConnect) {
