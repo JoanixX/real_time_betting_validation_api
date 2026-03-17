@@ -11,53 +11,38 @@ export interface BetSelection {
 }
 
 interface SelectionsState {
-  selections: Map<string, BetSelection>;
+  selection: BetSelection | null;
+  isSubmitting: boolean;
 
-  addSelection: (selection: BetSelection) => void;
-  removeSelection: (matchId: string) => void;
-  updateAmount: (matchId: string, amount: number) => void;
+  setSelection: (selection: BetSelection) => void;
+  clearSelection: () => void;
+  updateAmount: (amount: number) => void;
+  setSubmitting: (isSubmitting: boolean) => void;
 
-  // Actualizar odds (cuando cambia en real-time y el usuario aún no envió)
+  // Actualizar odds (cuando cambia en real-time y el usuario aun no envio)
   syncOdds: (matchId: string, odds: number) => void;
-  clearAll: () => void;
 }
 
 export const useSelectionsStore = create<SelectionsState>((set) => ({
-  selections: new Map(),
-  // funciones
-  addSelection: (selection) =>
-    set((state) => {
-      const next = new Map(state.selections);
-      next.set(selection.matchId, selection);
-      return { selections: next };
-    }),
+  selection: null,
+  isSubmitting: false,
 
-  removeSelection: (matchId) =>
-    set((state) => {
-      const next = new Map(state.selections);
-      next.delete(matchId);
-      return { selections: next };
-    }),
+  setSelection: (selection) => set({ selection }),
 
-  updateAmount: (matchId, amount) =>
-    set((state) => {
-      const next = new Map(state.selections);
-      const existing = next.get(matchId);
-      if (existing) {
-        next.set(matchId, { ...existing, amount });
-      }
-      return { selections: next };
-    }),
+  clearSelection: () => set({ selection: null }),
+
+  updateAmount: (amount) =>
+    set((state) => ({
+      selection: state.selection ? { ...state.selection, amount } : null,
+    })),
+
+  setSubmitting: (isSubmitting) => set({ isSubmitting }),
 
   syncOdds: (matchId, odds) =>
     set((state) => {
-      const next = new Map(state.selections);
-      const existing = next.get(matchId);
-      if (existing) {
-        next.set(matchId, { ...existing, odds });
+      if (state.selection && state.selection.matchId === matchId) {
+        return { selection: { ...state.selection, odds } };
       }
-      return { selections: next };
+      return state;
     }),
-
-  clearAll: () => set({ selections: new Map() }),
 }));

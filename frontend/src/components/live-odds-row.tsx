@@ -30,15 +30,17 @@ const LiveOddsRow = React.memo(function LiveOddsRow({
   const { odds } = useLiveOdds(matchId);
   const { direction, flashKey } = useOddsChange(odds);
 
-  const isSelected = useSelectionsStore((s) => s.selections.has(matchId));
-  const addSelection = useSelectionsStore((s) => s.addSelection);
-  const removeSelection = useSelectionsStore((s) => s.removeSelection);
+  const selection = useSelectionsStore((s) => s.selection);
+  const setSelection = useSelectionsStore((s) => s.setSelection);
+  const clearSelection = useSelectionsStore((s) => s.clearSelection);
+
+  const isSelected = selection?.matchId === matchId;
 
   const handleToggleSelection = () => {
     if (isSelected) {
-      removeSelection(matchId);
+      clearSelection();
     } else if (odds !== undefined) {
-      addSelection({
+      setSelection({
         matchId,
         homeTeam,
         awayTeam,
