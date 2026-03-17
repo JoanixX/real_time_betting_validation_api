@@ -35,25 +35,18 @@ impl BettingStateRepository for RedisBettingStateRepository {
         // estas son las llaves involucradas que el script atómico leera
         let match_odds_key = format!("match:{}:odds", match_id.0);
         let user_balance_key = format!("user:{}:balance", user_id.0);
-        let pending_bets_key = "bets:pending".to_string();
-
-        let bet_payload = format!(
-            "{}:{}:{}:{}:{}",
-            bet_id.0,
-            user_id.0,
-            match_id.0,
-            amount.amount_cents,
-            expected_odds.value_thousandths
-        );
+        let pending_bets_key = "bets_stream".to_string();
 
         // Aqui hacemos algo interesante, usamos lua para no utilizar
         // la lectura y escritura por separado, lo que podria causar race conditions (WATCH)
         // keys[1] -> match odds
         // keys[2] -> user balance
-        // keys[3] -> pending bets list
+        // keys[3] -> pending bets stream
         // ARGV[1] -> expected_odds (en milesimas)
         // ARGV[2] -> amount (en centavos)
-        // ARGV[3] -> bet payload
+        // ARGV[3] -> bet id
+        // ARGV[4] -> user id
+        // ARGV[5] -> match id
         
         let script = Script::new(
             r#"
@@ -72,8 +65,8 @@ impl BettingStateRepository for RedisBettingStateRepository {
             -- 3. Restar atómicamente el saldo y permitir apuesta
             redis.call("DECRBY", KEYS[2], tonumber(ARGV[2]))
             
-            -- 4. Registrar en lista de pendientes
-            redis.call("RPUSH", KEYS[3], ARGV[3])
+            -- 4. Registrar en stream de pendientes
+            redis.call("XADD", KEYS[3], "*", "bet_id", ARGV[3], "user_id", ARGV[4], "match_id", ARGV[5], "amount", ARGV[2], "odds", ARGV[1])
             
             return 1 -- OK
             "#,
@@ -85,7 +78,9 @@ impl BettingStateRepository for RedisBettingStateRepository {
             .key(pending_bets_key)
             .arg(expected_odds.value_thousandths)
             .arg(amount.amount_cents)
-            .arg(bet_payload)
+            .arg(bet_id.0.to_string())
+            .arg(user_id.0.to_string())
+            .arg(match_id.0.to_string())
             .invoke_async(&mut *conn)
             .await
             .map_err(map_redis_error)?;
