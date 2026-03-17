@@ -2,6 +2,7 @@ use dashmap::DashMap;
 use std::sync::Arc;
 use tokio::sync::mpsc;
 use crate::domain::{UserId, MatchId};
+use crate::telemetry::metrics::BETTING_API_ACTIVE_WS_CONNECTIONS;
 
 // mensajes internos hacia la sesión ws
 #[derive(Debug, Clone)]
@@ -33,13 +34,15 @@ impl ConnectionManager {
         }
     }
 
-    // registra nuevo cliente post-upgrade
-    pub fn add_client(&self, user_id: UserId, sender: mpsc::UnboundedSender<WsMessage>) {
+    // registra nuevo cliente post-upgrade y retorna el guard
+    // que reduce la metrica cuando se destruya en memoria
+    pub fn add_client(&self, user_id: UserId, sender: mpsc::UnboundedSender<WsMessage>) -> WsConnectionMetricsGuard {
         self.sessions.insert(user_id, SessionState {
             sender,
             subscriptions: dashmap::DashSet::new(),
         });
         tracing::debug!("Usuario {} conectado al websocket", user_id);
+        WsConnectionMetricsGuard::new()
     }
 
     // limpia sesión terminada de ram
@@ -90,5 +93,21 @@ impl ConnectionManager {
         for dead_user in disconnected_users {
             self.remove_client(&dead_user);
         }
+    }
+}
+
+// estructura raii (resource acquisition is initialization)
+// garantiza matematicamente que el dec() se llamará al salir de la conexion
+pub struct WsConnectionMetricsGuard;
+impl WsConnectionMetricsGuard {
+    pub fn new() -> Self {
+        BETTING_API_ACTIVE_WS_CONNECTIONS.inc();
+        Self
+    }
+}
+
+impl Drop for WsConnectionMetricsGuard {
+    fn drop(&mut self) {
+        BETTING_API_ACTIVE_WS_CONNECTIONS.dec();
     }
 }

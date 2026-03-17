@@ -1,9 +1,7 @@
-// Adaptador primario http para el handler de apuestas
-// no hay lógica de negocio, solo traduce http a caso de uso y viceversa
-
 use actix_web::{web, HttpResponse};
 use uuid::Uuid;
 use crate::application::PlaceBetUseCase;
+use crate::telemetry::metrics::{BETTING_API_BETS_PLACED_TOTAL, BETTING_API_BETS_REJECTED_TOTAL};
 use crate::domain::{Bet, BetId, MatchId, UserId, Money, Odds};
 use super::dto::{ValidateBetRequest, PlaceBetResponse};
 
@@ -39,6 +37,9 @@ pub async fn validate_bet(
     // Se manda al caso de uso
     match use_case.execute(bet).await {
         Ok(result) => {
+            // esto registra la metrica que confirma que todo god
+            BETTING_API_BETS_PLACED_TOTAL.inc();
+            
             // se traduce la entidad rica a un dto simple
             HttpResponse::Created().json(PlaceBetResponse {
                 bet_id: result.bet.id.0,
@@ -49,6 +50,11 @@ pub async fn validate_bet(
                 status: result.bet.status.as_str().to_string(),
             })
         }
-        Err(e) => crate::errors::domain_error_to_response(e),
+        Err(e) => {
+            // registramos aqui la metrica de rechazo
+            // o sea si una regla de negocio se rompe
+            BETTING_API_BETS_REJECTED_TOTAL.inc();
+            crate::errors::domain_error_to_response(e)
+        }
     }
 }
