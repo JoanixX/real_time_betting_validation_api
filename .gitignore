@@ -37,3 +37,6 @@ Instrucciones.md
 
 # script generador de secretos (contiene lógica sensible)
 scripts/generate_secrets.py
+
+# manejador de errores
+backend/errors.txt
