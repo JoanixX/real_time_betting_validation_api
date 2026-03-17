@@ -15,6 +15,7 @@ use std::sync::Arc;
 use tracing_actix_web::TracingLogger;
 use actix_cors::Cors;
 use actix_governor::Governor;
+use actix_web_prom::PrometheusMetricsBuilder;
 
 // infraestructura
 use crate::infrastructure::database;
@@ -82,11 +83,20 @@ impl Application {
         // compartiéndole el ws_manager
         spawn_redis_pubsub_worker(configuration.redis.connection_string(), ws_manager.clone());
 
-        // se levanta el persister que consume el stream y guarda persistente en postgres
+        // levantamos el worker que consume el stream y guarda persistente en postgres
         spawn_bet_persister_worker(redis_pool.clone(), connection_pool.clone());
 
-        // instanciar el limitador de requests una sola vez 
+        // instanciamos el limitador de requests una sola vez 
         let rate_limit_config = crate::middlewares::rate_limit::build_rate_limiter();
+
+        // instanciar métricas de prometheus (actix-web-prom)
+        let prometheus = PrometheusMetricsBuilder::new("betting_api")
+            .endpoint("/metrics")
+            .build()
+            .expect("Fallo inicializando metricas de prometheus");
+
+        // registramos contadores y gauges personalizados al registro del prometheus
+        crate::telemetry::metrics::register_custom_metrics(&prometheus.registry);
 
         // direccion y puerto donde escucha el servidor
         let address = format!(
@@ -96,7 +106,7 @@ impl Application {
         let listener = TcpListener::bind(address)?;
         let port = listener.local_addr().unwrap().port();
 
-        let server = run(listener, place_bet_uc, register_uc, login_uc, ws_manager, rate_limit_config)?;
+        let server = run(listener, place_bet_uc, register_uc, login_uc, ws_manager, rate_limit_config, prometheus)?;
 
         Ok(Self { port, server })
     }
@@ -117,6 +127,7 @@ pub fn run(
     login_uc: LoginUserUseCase,
     ws_manager: ConnectionManager,
     rate_limit_config: actix_governor::GovernorConfig<crate::middlewares::rate_limit::RealIpExtractor, actix_governor::governor::middleware::StateInformationMiddleware>,
+    prometheus_middleware: actix_web_prom::PrometheusMetrics,
 ) -> Result<Server, std::io::Error> {
     // envolvemos los casos de uso en Data para compartir entre threads de actix
     let place_bet_uc = web::Data::new(place_bet_uc);
@@ -131,13 +142,15 @@ pub fn run(
             .allow_any_header()
             .max_age(3600);
             
-        // al clonar compartimos el mismo estado en memoria a 
-        // traves de todos los workers actix
+        // clonamos y compartimos el estado de memoria a
+        // todos los workers actix para tener el mismo limite
         let limit_cfg = rate_limit_config.clone();
+        let prom = prometheus_middleware.clone();
 
         App::new()
             .wrap(cors)
             .wrap(TracingLogger::default())
+            .wrap(prom)
             .configure(routes::configure_routes)
             .service(
                 web::scope("")
