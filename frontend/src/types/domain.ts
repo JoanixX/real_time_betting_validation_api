@@ -112,6 +112,14 @@ export interface WSOddsUpdate {
 
 export type MatchStatus = typeof MATCH_STATUS[keyof typeof MATCH_STATUS];
 
+export interface Match {
+  id: string;
+  home_team: string;
+  away_team: string;
+  status: MatchStatus;
+  odds: number; // odds iniciales
+}
+
 export interface WSMatchStatusEvent {
   type: typeof WS_EVENTS.MATCH_STATUS_CHANGED;
   payload: {

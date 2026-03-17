@@ -9,6 +9,7 @@ import type {
   LoginRequest,
   AuthResponse,
   User,
+  Match,
 } from '@/types/domain';
 
 // cliente axios preconfigurado con baseURL y timeout
@@ -39,6 +40,20 @@ export async function checkHealth(): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+// Active matches snapshot
+export async function fetchActiveMatches(): Promise<Match[]> {
+  // hacemos una especie de simulacion temporal de 500ms
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve([
+        { id: 'match-1', home_team: 'Real Madrid', away_team: 'Barcelona', status: 'InPlay', odds: 1.85 },
+        { id: 'match-2', home_team: 'Manchester City', away_team: 'Arsenal', status: 'InPlay', odds: 2.1 },
+        { id: 'match-3', home_team: 'Bayern Munich', away_team: 'Dortmund', status: 'NotStarted', odds: 1.5 },
+      ]);
+    }, 500);
+  });
 }
 
 // Apuestas

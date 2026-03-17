@@ -5,21 +5,18 @@ import { LiveOddsTable } from '@/components/live-odds-table';
 import { BettingSlip } from '@/components/betting-slip';
 import { ConnectionStatus } from '@/components/connection-status';
 import { Badge } from '@/components/ui/badge';
-import { startMockOddsStream, getMockMatches, type MockMatch } from '@/lib/mock-socket';
 import { useBettingStore } from '@/store/betting-store';
 import { Activity, Zap } from 'lucide-react';
 import { MATCH_STATUS, BET_STATUS } from '@/lib/constants';
+import { useSocket } from '@/hooks/use-socket';
+import { useActiveMatches } from '@/hooks/use-active-matches';
 
 export default function DashboardPage() {
-  const [matches, setMatches] = useState<MockMatch[]>([]);
+  const { data: matches = [], isLoading } = useActiveMatches();
   const activityLog = useBettingStore((s) => s.activityLog);
 
-  // iniciar mock stream al montar el dashboard
-  useEffect(() => {
-    setMatches(getMockMatches());
-    const cleanup = startMockOddsStream();
-    return cleanup;
-  }, []);
+  // iniciar flujo del stream websocket delta
+  useSocket();
 
   return (
     <div className="space-y-6">
@@ -43,7 +40,13 @@ export default function DashboardPage() {
       {/* layout principal: tabla + betting slip */}
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2">
-          <LiveOddsTable matches={matches} />
+          {isLoading ? (
+            <div className="flex h-48 items-center justify-center rounded-lg border border-dashed bg-muted/20">
+              <span className="animate-pulse text-muted-foreground">Cargando partidos...</span>
+            </div>
+          ) : (
+            <LiveOddsTable matches={matches} />
+          )}
         </div>
         <div className="lg:col-span-1">
           <BettingSlip />

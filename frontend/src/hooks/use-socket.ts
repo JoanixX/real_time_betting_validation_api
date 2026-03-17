@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useCallback, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { getSocketClient, type ConnectionState } from '@/lib/socket';
 import { useOddsStore } from '@/store/odds-store';
 import { useBettingStore } from '@/store/betting-store';
@@ -14,6 +15,7 @@ interface UseSocketOptions {
 export function useSocket(options: UseSocketOptions = {}) {
   const { autoConnect = true } = options;
   const [connectionState, setConnectionState] = useState<ConnectionState>('disconnected');
+  const queryClient = useQueryClient();
 
   const updateOdds = useOddsStore((s) => s.updateOdds);
   const resolveBet = useBettingStore((s) => s.resolveBet);
@@ -30,7 +32,13 @@ export function useSocket(options: UseSocketOptions = {}) {
     const client = getSocketClient();
 
     // estado de conexión
-    const unsubState = client.onStateChange(setConnectionState);
+    const unsubState = client.onStateChange((state) => {
+      setConnectionState(state);
+      if (state === 'connected') {
+        // en la reconoexion hacemos un refetch del snapshot para sync state
+        queryClient.invalidateQueries({ queryKey: ['matches', 'active'] });
+      }
+    });
 
     // pipeline WS va a zustand y actualiza odds
     const unsubOdds = client.on(WS_EVENTS.ODDS_UPDATED, (payload) => {

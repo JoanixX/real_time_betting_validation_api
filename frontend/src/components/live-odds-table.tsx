@@ -8,10 +8,10 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { LiveOddsRow } from '@/components/live-odds-row';
-import type { MockMatch } from '@/lib/mock-socket';
+import type { Match } from '@/types/domain';
 
 interface LiveOddsTableProps {
-  matches: MockMatch[];
+  matches: Match[];
 }
 
 // La tabla wrapper solo re-renderiza cuando la lista de matches cambia
