@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { startMockOddsStream, getMockMatches, type MockMatch } from '@/lib/mock-socket';
 import { useBettingStore } from '@/store/betting-store';
 import { Activity, Zap } from 'lucide-react';
+import { MATCH_STATUS, BET_STATUS } from '@/lib/constants';
 
 export default function DashboardPage() {
   const [matches, setMatches] = useState<MockMatch[]>([]);
@@ -33,7 +34,7 @@ export default function DashboardPage() {
         <div className="flex items-center gap-3">
           <Badge variant="outline" className="gap-1">
             <Zap className="h-3 w-3" />
-            {matches.filter((m) => m.status === 'live').length} en vivo
+            {matches.filter((m) => m.status === MATCH_STATUS.IN_PLAY).length} en vivo
           </Badge>
           <ConnectionStatus />
         </div>
@@ -66,7 +67,7 @@ export default function DashboardPage() {
                   ${entry.amount.toFixed(2)} apuesta
                   {entry.status && (
                     <Badge
-                      variant={entry.status === 'Validated' ? 'default' : 'destructive'}
+                      variant={entry.status === BET_STATUS.ACCEPTED ? 'default' : 'destructive'}
                       className="ml-2 text-[10px]"
                     >
                       {entry.status}

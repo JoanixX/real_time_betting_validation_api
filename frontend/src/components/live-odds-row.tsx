@@ -10,6 +10,7 @@ import { useSelectionsStore } from '@/store/selections-store';
 import { cn } from '@/lib/utils';
 import { Plus, Check } from 'lucide-react';
 import type { MatchStatus } from '@/types/domain';
+import { MATCH_STATUS } from '@/lib/constants';
 
 interface LiveOddsRowProps {
   matchId: string;
@@ -47,9 +48,9 @@ const LiveOddsRow = React.memo(function LiveOddsRow({
     }
   };
 
-  const statusBadgeVariant = status === 'live'
+  const statusBadgeVariant = status === MATCH_STATUS.IN_PLAY
     ? 'default'
-    : status === 'suspended'
+    : status === MATCH_STATUS.SUSPENDED
       ? 'destructive'
       : 'secondary';
 
@@ -72,7 +73,7 @@ const LiveOddsRow = React.memo(function LiveOddsRow({
 
       <TableCell>
         <Badge variant={statusBadgeVariant} className="capitalize">
-          {status === 'live' && (
+          {status === MATCH_STATUS.IN_PLAY && (
             <span className="mr-1 inline-block h-2 w-2 animate-pulse rounded-full bg-green-400" />
           )}
           {status}
@@ -96,7 +97,7 @@ const LiveOddsRow = React.memo(function LiveOddsRow({
           variant={isSelected ? 'default' : 'outline'}
           size="sm"
           onClick={handleToggleSelection}
-          disabled={status !== 'live' || odds === undefined}
+          disabled={status !== MATCH_STATUS.IN_PLAY || odds === undefined}
         >
           {isSelected ? (
             <>
