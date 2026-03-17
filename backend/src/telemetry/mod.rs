@@ -5,6 +5,8 @@ use tracing_log::LogTracer;
 use tracing_subscriber::{layer::SubscriberExt, EnvFilter, Registry};
 use tracing_subscriber::fmt::MakeWriter;
 
+pub mod metrics;
+
 /// compone múltiples capas en un subscriber de tracing.
 /// usamos `impl Subscriber` como retorno para no escribir el tipo completo.
 pub fn get_subscriber<Sink>(
