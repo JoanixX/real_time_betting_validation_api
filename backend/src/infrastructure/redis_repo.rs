@@ -37,16 +37,16 @@ impl BettingStateRepository for RedisBettingStateRepository {
         let user_balance_key = format!("user:{}:balance", user_id.0);
         let pending_bets_key = "bets_stream".to_string();
 
-        // Aqui hacemos algo interesante, usamos lua para no utilizar
-        // la lectura y escritura por separado, lo que podria causar race conditions (WATCH)
+        // aqui hacemos algo interesante, usamos lua para no utilizar
+        // la lectura y escritura por separado, lo que podria causar race conditions (watch)
         // keys[1] -> match odds
         // keys[2] -> user balance
         // keys[3] -> pending bets stream
-        // ARGV[1] -> expected_odds (en milesimas)
-        // ARGV[2] -> amount (en centavos)
-        // ARGV[3] -> bet id
-        // ARGV[4] -> user id
-        // ARGV[5] -> match id
+        // argv[1] -> expected_odds (en milesimas)
+        // argv[2] -> amount (en centavos)
+        // argv[3] -> bet id
+        // argv[4] -> user id
+        // argv[5] -> match id
         
         let script = Script::new(
             r#"
