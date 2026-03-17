@@ -80,6 +80,7 @@ handlers → application → domain ← infrastructure
          │  PostgresBetRepository          │
          │  PostgresUserRepository         │
          │  RedisCacheAdapter / Upstash    │
+         │  RedisBettingStateRepository    │
          │  Argon2Hasher                   │
          └─────────────────────────────────┘
 ```
@@ -109,6 +110,9 @@ backend/
 │   │   ├── persistence/        (Postgres: PostgresBetRepository, PostgresUserRepository)
 │   │   ├── cache/              (Redis/Upstash: RedisCacheAdapter)
 │   │   ├── security/           (Argon2Hasher)
+│   │   ├── workers/            (background workers: bet_persister)
+│   │   ├── redis_pubsub.rs     (broadcast de eventos)
+│   │   ├── redis_repo.rs       (repositorio de estado distribuido)
 │   │   └── database.rs         (pool de conexiones)
 │   ├── handlers/               ← adaptadores primarios (driving)
 │   │   ├── dto.rs              (request/response DTOs HTTP)
@@ -214,6 +218,8 @@ ver `.env.example` para la plantilla con todas las variables necesarias y cómo 
 - **`async-trait`**: usado para definir puertos async de forma ergonómica.
 - **`DomainError`**: errores de dominio tipados con `thiserror`, mapeados a HTTP en `errors/mod.rs`.
 - **composition root en `lib.rs`**: toda la inyección de dependencias centralizada en un solo lugar.
+
+## 📈 Escalabilidad
 
 - **horizontal**: la API es stateless y puede replicarse sin conflictos (estado distribuido en Redis).
 - **base de datos**: PostgreSQL actuando como fuente de la verdad asíncrona (Write-Behind).
