@@ -18,5 +18,5 @@ export function useLiveOdds(matchId: string) {
 // hook para leer todos los odds activos, por ejemplo para el overview
 // re-renderiza con cualquier cambio de odds
 export function useAllLiveOdds() {
-  return useOddsStore((s) => s.oddsMap);
+  return useOddsStore((s) => s.odds);
 }

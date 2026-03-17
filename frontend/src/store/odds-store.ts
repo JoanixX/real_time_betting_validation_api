@@ -10,8 +10,8 @@ interface OddsEntry {
 
 interface OddsState {
   // Estado
-  // se hace un mapa para reducir la complejidad, con un objeto plano con muchas keys
-  oddsMap: Map<string, OddsEntry>;
+  // usamos un record plano para O(1) en los lookups y comparaciones por referencia
+  odds: Record<string, OddsEntry>;
 
   // Acciones
   updateOdds: (matchId: string, odds: number) => void;
@@ -21,46 +21,43 @@ interface OddsState {
 }
 
 export const useOddsStore = create<OddsState>((set) => ({
-  oddsMap: new Map(),
+  odds: {},
 
-  // hacemos que el zustand solo re-renderiza si la referencia del Map cambia
   updateOdds: (matchId, odds) =>
-    set((state) => {
-      const next = new Map(state.oddsMap);
-      next.set(matchId, { odds, lastUpdated: Date.now() });
-      return { oddsMap: next };
-    }),
+    set((state) => ({
+      odds: {
+        ...state.odds,
+        [matchId]: { odds, lastUpdated: Date.now() },
+      },
+    })),
 
-  // Batch update para cuando llegan múltiples odds juntos
-  // un solo re-render por cada cambio del mapa
   updateOddsBatch: (updates) =>
     set((state) => {
-      const next = new Map(state.oddsMap);
       const now = Date.now();
+      const newOdds = { ...state.odds };
       for (const u of updates) {
-        next.set(u.match_id, { odds: u.odds, lastUpdated: now });
+        newOdds[u.match_id] = { odds: u.odds, lastUpdated: now };
       }
-      return { oddsMap: next };
+      return { odds: newOdds };
     }),
 
   removeMatch: (matchId) =>
     set((state) => {
-      const next = new Map(state.oddsMap);
-      next.delete(matchId);
-      return { oddsMap: next };
+      const newOdds = { ...state.odds };
+      delete newOdds[matchId];
+      return { odds: newOdds };
     }),
 
-  clear: () => set({ oddsMap: new Map() }),
+  clear: () => set({ odds: {} }),
 }));
 
 // se usa el selector helper para leer odds de un match específico
-// sin re-renders de otros matches
-// por ejemplo con el const odds = useMatchOdds('match-123')
+// la re-renderizacion granular es O(1) con zustand
 export function useMatchOdds(matchId: string): number | undefined {
-  return useOddsStore((s) => s.oddsMap.get(matchId)?.odds);
+  return useOddsStore((s) => s.odds[matchId]?.odds);
 }
 
-// otro selector para saber la fecha de ultima actualización
+// selector para saber la fecha de ultima actualizacion
 export function useMatchOddsTimestamp(matchId: string): number | undefined {
-  return useOddsStore((s) => s.oddsMap.get(matchId)?.lastUpdated);
+  return useOddsStore((s) => s.odds[matchId]?.lastUpdated);
 }
