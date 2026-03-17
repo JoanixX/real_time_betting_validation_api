@@ -40,3 +40,4 @@ scripts/generate_secrets.py
 
 # manejador de errores
 backend/errors.txt
+backend/test_errors.txt
