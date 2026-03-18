@@ -227,6 +227,35 @@ async fn process_and_ack_match_result(
         }
     };
 
+    // verificacion de idempotencia estricta
+    let idempotency_res = sqlx::query(
+        r#"
+        INSERT INTO processed_match_results (match_id) 
+        VALUES ($1) 
+        ON CONFLICT (match_id) DO NOTHING
+        "#
+    )
+    .bind(match_id)
+    .execute(&mut *tx)
+    .await;
+
+    match idempotency_res {
+        Ok(result) => {
+            if result.rows_affected() == 0 {
+                let _ = tx.rollback().await;
+                tracing::warn!("Idempotency trigger: Match {} already processed. Skipping settlement.", match_id);
+                // saltamos directo al xack
+                let _: deadpool_redis::redis::RedisResult<()> = redis_conn.xack(STREAM_KEY, GROUP_NAME, &[&msg_id]).await;
+                return;
+            }
+        }
+        Err(e) => {
+            let _ = tx.rollback().await;
+            error!("Fallo al insertar llave de idempotencia para Match {}: {:?}", match_id, e);
+            return;
+        }
+    }
+
     // hacemos el bulk update para el bets
     if let Err(e) = sqlx::query(
         r#"
