@@ -41,6 +41,7 @@ impl BetRepository for PostgresBetRepository {
         bet: &Bet,
     ) -> Result<(), DomainError> {
         let status_str = bet.status.as_str();
+        let selection_str = bet.selection.as_str();
 
         // en la bd actual, amount y odds se almacenan como f64 y
         // en un escenario real ideal se enviarian enteros.
@@ -49,13 +50,14 @@ impl BetRepository for PostgresBetRepository {
 
         sqlx::query(
             r#"
-            INSERT INTO bets (id, user_id, match_id, amount, odds, status, created_at)
-            VALUES ($1, $2, $3, $4, $5, $6, $7)
+            INSERT INTO bets (id, user_id, match_id, selection, amount, odds, status, created_at)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
             "#,
         )
         .bind(bet.id.0)
         .bind(bet.user_id.0)
         .bind(bet.match_id.0)
+        .bind(selection_str)
         .bind(amount_f64)
         .bind(odds_f64)
         .bind(status_str)
@@ -71,7 +73,7 @@ impl BetRepository for PostgresBetRepository {
         use sqlx::Row;
 
         let row = sqlx::query(
-            r#"SELECT id, user_id, match_id, amount, odds, status FROM bets WHERE id = $1"#
+            r#"SELECT id, user_id, match_id, selection, amount, odds, status FROM bets WHERE id = $1"#
         )
         .bind(id.0)
         .fetch_optional(&self.pool)
@@ -96,11 +98,20 @@ impl BetRepository for PostgresBetRepository {
             let user_uuid: Uuid = r.try_get("user_id").unwrap();
             let match_uuid: Uuid = r.try_get("match_id").unwrap();
             let status_str: Option<String> = r.try_get("status").unwrap_or(None);
+            let selection_str: String = r.try_get("selection").unwrap_or_else(|_| "HomeWin".to_string());
+
+            let selection = match selection_str.as_str() {
+                "HomeWin" => crate::domain::BetSelection::HomeWin,
+                "AwayWin" => crate::domain::BetSelection::AwayWin,
+                "Draw" => crate::domain::BetSelection::Draw,
+                _ => crate::domain::BetSelection::HomeWin,
+            };
 
             let mut bet = Bet::new(
                 BetId::from(id_uuid),
                 UserId::from(user_uuid),
                 MatchId::from(match_uuid),
+                selection,
                 Money::from_decimal(amount),
                 Odds::from_decimal(odds),
             );

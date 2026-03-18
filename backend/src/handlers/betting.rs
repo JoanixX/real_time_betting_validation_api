@@ -22,6 +22,14 @@ pub async fn validate_bet(
     let user_id = UserId::from(item.user_id);
     let match_id = MatchId::from(item.match_id);
     
+    // parseamos el selection a enum
+    let selection = match item.selection.as_str() {
+        "HomeWin" => crate::domain::BetSelection::HomeWin,
+        "AwayWin" => crate::domain::BetSelection::AwayWin,
+        "Draw" => crate::domain::BetSelection::Draw,
+        _ => return HttpResponse::BadRequest().json("Selección inválida"),
+    };
+
     // Convertir de dto a tipos internos de dominio
     let amount = Money::from_decimal(item.amount);
     let odds = Odds::from_decimal(item.odds);
@@ -30,6 +38,7 @@ pub async fn validate_bet(
         bet_id,
         user_id,
         match_id,
+        selection,
         amount,
         odds,
     );
@@ -45,6 +54,7 @@ pub async fn validate_bet(
                 bet_id: result.bet.id.0,
                 user_id: result.bet.user_id.0,
                 match_id: result.bet.match_id.0,
+                selection: result.bet.selection.as_str().to_string(),
                 amount: result.bet.amount.to_decimal(),
                 odds: result.bet.locked_odds.to_decimal(),
                 status: result.bet.status.as_str().to_string(),

@@ -1,5 +1,5 @@
 // dtos de los adaptadores primarios http
-// Los tipos creados en esta capa pertenecen a la capa de handlers, no al dominio
+// los tipos creados en esta capa pertenecen a la capa de handlers, no al dominio
 
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -9,6 +9,7 @@ use uuid::Uuid;
 pub struct ValidateBetRequest {
     pub user_id: Uuid,
     pub match_id: Uuid,
+    pub selection: String,
     pub amount: f64,
     pub odds: f64,
 }
@@ -19,6 +20,7 @@ pub struct PlaceBetResponse {
     pub bet_id: Uuid,
     pub user_id: Uuid,
     pub match_id: Uuid,
+    pub selection: String,
     pub amount: f64,
     pub odds: f64,
     pub status: String,

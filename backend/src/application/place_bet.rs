@@ -32,6 +32,7 @@ impl PlaceBetUseCase {
             bet.id,
             bet.user_id,
             bet.match_id,
+            bet.selection.clone(),
             bet.amount,
             bet.locked_odds
         ).await?;

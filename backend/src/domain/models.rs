@@ -85,6 +85,23 @@ pub enum MatchStatus {
     Suspended,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub enum BetSelection {
+    HomeWin,
+    AwayWin,
+    Draw,
+}
+
+impl BetSelection {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            BetSelection::HomeWin => "HomeWin",
+            BetSelection::AwayWin => "AwayWin",
+            BetSelection::Draw => "Draw",
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SportMatch {
     pub id: MatchId,
@@ -97,6 +114,8 @@ pub enum BetStatus {
     Pending,
     Accepted,
     Rejected,
+    Won,
+    Lost,
 }
 
 impl BetStatus {
@@ -105,6 +124,8 @@ impl BetStatus {
             BetStatus::Pending => "PENDING",
             BetStatus::Accepted => "ACCEPTED",
             BetStatus::Rejected => "REJECTED",
+            BetStatus::Won => "WON",
+            BetStatus::Lost => "LOST",
         }
     }
 }
@@ -124,6 +145,7 @@ pub struct Bet {
     pub id: BetId,
     pub user_id: UserId,
     pub match_id: MatchId,
+    pub selection: BetSelection,
     pub amount: Money,
     pub locked_odds: Odds,
     pub status: BetStatus,
@@ -134,6 +156,7 @@ impl Bet {
         id: BetId,
         user_id: UserId,
         match_id: MatchId,
+        selection: BetSelection,
         amount: Money,
         locked_odds: Odds,
     ) -> Self {
@@ -141,6 +164,7 @@ impl Bet {
             id,
             user_id,
             match_id,
+            selection,
             amount,
             locked_odds,
             status: BetStatus::Pending,
@@ -169,8 +193,8 @@ mod tests {
         assert_eq!(user_id.0, uuid);
         assert_eq!(match_id.0, uuid);
         
-        // esto no compilaría por los NewTypes, lo cual es el objetivo
-        // assert_eq!(user_id, match_id); 
+        // esto no compilaria por los newtypes, lo cual es el objetivo
+        // assert_eq!(user_id, match_id)
     }
 
     #[test]
@@ -200,6 +224,7 @@ mod tests {
             BetId::from(Uuid::new_v4()),
             UserId::from(Uuid::new_v4()),
             MatchId::from(Uuid::new_v4()),
+            BetSelection::HomeWin,
             Money::new(1000),
             Odds::new(2000),
         );

@@ -26,6 +26,7 @@ impl BettingStateRepository for RedisBettingStateRepository {
         bet_id: crate::domain::BetId,
         user_id: UserId,
         match_id: MatchId,
+        selection: crate::domain::BetSelection,
         amount: Money,
         expected_odds: Odds,
     ) -> Result<(), DomainError> {
@@ -47,6 +48,7 @@ impl BettingStateRepository for RedisBettingStateRepository {
         // argv[3] -> bet id
         // argv[4] -> user id
         // argv[5] -> match id
+        // argv[6] -> selection
         
         let script = Script::new(
             r#"
@@ -66,7 +68,7 @@ impl BettingStateRepository for RedisBettingStateRepository {
             redis.call("DECRBY", KEYS[2], tonumber(ARGV[2]))
             
             -- 4. Registrar en stream de pendientes
-            redis.call("XADD", KEYS[3], "*", "bet_id", ARGV[3], "user_id", ARGV[4], "match_id", ARGV[5], "amount", ARGV[2], "odds", ARGV[1])
+            redis.call("XADD", KEYS[3], "*", "bet_id", ARGV[3], "user_id", ARGV[4], "match_id", ARGV[5], "selection", ARGV[6], "amount", ARGV[2], "odds", ARGV[1])
             
             return 1 -- OK
             "#,
@@ -81,6 +83,7 @@ impl BettingStateRepository for RedisBettingStateRepository {
             .arg(bet_id.0.to_string())
             .arg(user_id.0.to_string())
             .arg(match_id.0.to_string())
+            .arg(selection.as_str())
             .invoke_async(&mut *conn)
             .await
             .map_err(map_redis_error)?;

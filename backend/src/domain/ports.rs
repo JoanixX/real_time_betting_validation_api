@@ -68,6 +68,7 @@ pub trait BettingStateRepository: Send + Sync {
         bet_id: BetId,
         user_id: UserId,
         match_id: MatchId,
+        selection: crate::domain::BetSelection,
         amount: crate::domain::Money,
         expected_odds: crate::domain::Odds,
     ) -> Result<(), DomainError>;
