@@ -102,9 +102,7 @@ pub fn get_configuration() -> Result<Settings, config::ConfigError> {
     // cargamos: base.yaml -> entorno.yaml -> variables de entorno con prefijo APP__
     let mut settings: Settings = Config::builder()
         .add_source(File::from(configuration_directory.join("base.yaml")))
-        .add_source(
-            File::from(configuration_directory.join(environment_filename)).required(false),
-        )
+        .add_source(File::from(configuration_directory.join(environment_filename)).required(false))
         .add_source(config::Environment::with_prefix("APP").separator("__"))
         .build()?
         .try_deserialize()?;
