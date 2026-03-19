@@ -1,3 +1,4 @@
+use deadpool_redis::redis::AsyncCommands;
 use high_concurrency_api::config::get_configuration;
 use high_concurrency_api::telemetry::{get_subscriber, init_subscriber};
 use high_concurrency_api::Application;
@@ -88,6 +89,24 @@ async fn place_bet_persists_to_postgres_via_redis_streams() {
     .await
     .unwrap();
 
+    let match_id = uuid::Uuid::new_v4();
+
+    // inyectamos los mismos datos en Redis (para que el script de Lua pase)
+    let redis_uri = format!("redis://{}:{}", redis_host, redis_port);
+    let redis_client = deadpool_redis::redis::Client::open(redis_uri).unwrap();
+    let mut redis_conn = redis_client.get_async_connection().await.unwrap();
+
+    // balance: 1000.00 USD -> 100000 centavos
+    let _: () = redis_conn
+        .set(format!("user:{}:balance", user_id), 100000)
+        .await
+        .unwrap();
+
+    let _: () = redis_conn
+        .set(format!("match:{}:odds", match_id), 1500)
+        .await
+        .unwrap();
+
     // 5. levantamos la app real en plano asincrono
     let application = Application::build(config).await.expect("Falló build app.");
     let app_port = application.port();
@@ -95,8 +114,6 @@ async fn place_bet_persists_to_postgres_via_redis_streams() {
 
     // 6. cliente HTTP para el test
     let client = reqwest::Client::new();
-
-    let match_id = uuid::Uuid::new_v4();
 
     // 7. POST al endpoint de bets
     // el handler usa from_decimal: amount en unidades (5.0 = $5.00), odds decimal (1.5)
