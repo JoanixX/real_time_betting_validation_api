@@ -1,11 +1,10 @@
 // entidades de dominio puras sin dtos de http
 // los request/response types van en el adaptador de handlers
 
-use serde::{Deserialize, Serialize};
-use uuid::Uuid;
 use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
 use std::fmt::Display;
-
+use uuid::Uuid;
 use super::money::Money;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -192,7 +191,6 @@ mod tests {
 
         assert_eq!(user_id.0, uuid);
         assert_eq!(match_id.0, uuid);
-        
         // esto no compilaria por los newtypes, lo cual es el objetivo
         // assert_eq!(user_id, match_id)
     }
@@ -213,7 +211,6 @@ mod tests {
         let odds1 = Odds::new(2500);
         let odds2 = Odds::new(2500);
         let odds3 = Odds::new(1500);
-
         assert_eq!(odds1, odds2);
         assert!(odds1 > odds3);
     }
@@ -228,7 +225,6 @@ mod tests {
             Money::new(1000),
             Odds::new(2000),
         );
-
         assert_eq!(bet.status, BetStatus::Pending);
 
         bet.accept();

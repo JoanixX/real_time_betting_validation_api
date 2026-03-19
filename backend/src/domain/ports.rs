@@ -6,7 +6,7 @@ use async_trait::async_trait;
 use uuid::Uuid;
 
 use super::errors::DomainError;
-use super::models::{Bet, BetId, BetStatus, SportMatch, MatchId, UserId};
+use super::models::{Bet, BetId, MatchId, SportMatch, UserId};
 
 // Puerto de apuestas
 #[async_trait]

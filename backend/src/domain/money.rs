@@ -1,8 +1,8 @@
-// patrón money para representar montos exactos y evitar problemas 
+// patrón money para representar montos exactos y evitar problemas
 // de precisión con f64. almacena el monto internamente en centavos.
 
-use std::ops::{Add, Sub};
 use serde::{Deserialize, Serialize};
+use std::ops::{Add, Sub};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub struct Money {

@@ -6,7 +6,7 @@ use super::models::{Bet, MatchStatus, SportMatch};
 use super::money::Money;
 
 pub trait BetValidationPolicy: Send + Sync {
-    /// aqui se valida si una apuesta puede ser aceptada de 
+    /// aqui se valida si una apuesta puede ser aceptada de
     // acuerdo a las reglas del dominio
     fn validate(
         &self,
@@ -36,9 +36,15 @@ impl StandardBetValidationPolicy {
     }
 
     // el usuario debe tener saldo suficiente
-    fn check_sufficient_funds(&self, bet_amount: &Money, user_balance: &Money) -> Result<(), DomainError> {
+    fn check_sufficient_funds(
+        &self,
+        bet_amount: &Money,
+        user_balance: &Money,
+    ) -> Result<(), DomainError> {
         if !bet_amount.is_positive() {
-            return Err(DomainError::InvalidAmount("el monto de la apuesta debe ser mayor a cero".to_string()));
+            return Err(DomainError::InvalidAmount(
+                "el monto de la apuesta debe ser mayor a cero".to_string(),
+            ));
         }
 
         if bet_amount > user_balance {
@@ -51,7 +57,11 @@ impl StandardBetValidationPolicy {
     }
 
     // las odds solicitadas deben coincidir exactamente con las actuales del partido
-    fn check_odds_match(&self, requested_odds: &super::models::Odds, current_odds: &super::models::Odds) -> Result<(), DomainError> {
+    fn check_odds_match(
+        &self,
+        requested_odds: &super::models::Odds,
+        current_odds: &super::models::Odds,
+    ) -> Result<(), DomainError> {
         if requested_odds != current_odds {
             return Err(DomainError::OddsChanged {
                 requested: *requested_odds,
@@ -59,6 +69,12 @@ impl StandardBetValidationPolicy {
             });
         }
         Ok(())
+    }
+}
+
+impl Default for StandardBetValidationPolicy {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -70,7 +86,7 @@ impl BetValidationPolicy for StandardBetValidationPolicy {
         user_balance: &Money,
     ) -> Result<(), DomainError> {
         // ejecutar las validaciones en orden de precedencia
-        
+
         // 1. validar que el monto sea valido y haya fondos
         self.check_sufficient_funds(&bet.amount, user_balance)?;
 
@@ -93,7 +109,7 @@ mod tests {
     fn setup_valid_bet_scenario() -> (Bet, SportMatch, Money) {
         let match_id = MatchId::from(Uuid::new_v4());
         let current_odds = Odds::new(2500); // 2.50
-        
+
         let sport_match = SportMatch {
             id: match_id,
             status: MatchStatus::InPlay,
@@ -126,7 +142,7 @@ mod tests {
     fn test_invalid_amount_is_rejected() {
         let policy = StandardBetValidationPolicy::new();
         let (mut bet, match_info, balance) = setup_valid_bet_scenario();
-        
+
         // Monto cero
         bet.amount = Money::new(0);
         let result = policy.validate(&bet, &match_info, &balance);
@@ -142,14 +158,17 @@ mod tests {
     fn test_insufficient_funds_is_rejected() {
         let policy = StandardBetValidationPolicy::new();
         let (bet, match_info, mut balance) = setup_valid_bet_scenario();
-        
+
         // Saldo menor a la apuesta (apuesta 1000, saldo 500)
         balance = Money::new(500);
-        
+
         let result = policy.validate(&bet, &match_info, &balance);
-        
+
         match result {
-            Err(DomainError::InsufficientFunds { available, required }) => {
+            Err(DomainError::InsufficientFunds {
+                available,
+                required,
+            }) => {
                 assert_eq!(available.amount_cents, 500);
                 assert_eq!(required.amount_cents, 1000);
             }
@@ -179,12 +198,12 @@ mod tests {
     fn test_odds_changed_is_rejected() {
         let policy = StandardBetValidationPolicy::new();
         let (mut bet, match_info, balance) = setup_valid_bet_scenario();
-        
+
         // las odds de la apuesta ya no coinciden con las del partido
         bet.locked_odds = Odds::new(2600); // 2.60 != 2.50
-        
+
         let result = policy.validate(&bet, &match_info, &balance);
-        
+
         match result {
             Err(DomainError::OddsChanged { requested, current }) => {
                 assert_eq!(requested.value_thousandths, 2600);
