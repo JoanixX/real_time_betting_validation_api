@@ -79,7 +79,9 @@ impl CachePort for RedisCacheAdapter {
                         .text()
                         .await
                         .map_err(|e| DomainError::Internal(e.to_string()))?;
-                    Err(DomainError::Internal(format!("Error en Upstash: {err_text}")))
+                    Err(DomainError::Internal(format!(
+                        "Error en Upstash: {err_text}"
+                    )))
                 }
             }
         }
@@ -130,7 +132,9 @@ impl CachePort for RedisCacheAdapter {
                         .text()
                         .await
                         .map_err(|e| DomainError::Internal(e.to_string()))?;
-                    Err(DomainError::Internal(format!("Error en Upstash: {err_text}")))
+                    Err(DomainError::Internal(format!(
+                        "Error en Upstash: {err_text}"
+                    )))
                 }
             }
         }
