@@ -90,15 +90,15 @@ async fn place_bet_persists_to_postgres_via_redis_streams() {
     let match_id = uuid::Uuid::new_v4();
 
     // 7. POST al endpoint de bets
-    // selection es requerido por el DTO desde que se agrego el campo al backend
-    // odds en milésimas (1500 = 1.50), amount en centavos
+    // el handler usa from_decimal: amount en unidades (5.0 = $5.00), odds decimal (1.5)
+    // selection es requerido por el DTO del backend
     let response = client.post(&format!("http://127.0.0.1:{}/bets", app_port))
         .json(&serde_json::json!({
             "user_id": user_id,
             "match_id": match_id,
             "selection": "HomeWin",
-            "amount": 500,
-            "odds": 1500,
+            "amount": 5.0,
+            "odds": 1.5,
         }))
         .send()
         .await
