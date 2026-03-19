@@ -86,4 +86,21 @@ Copiar como `.env` (local) o `.env.production` (producción) y rellenar con los 
 
 ---
 
-**Desarrollado para Escenarios de Misión Crítica | 2026**
+## License
+
+This project is source-available under a custom proprietary license.
+You may review the code, test it privately, make private evaluation-only modifications, and submit pull requests.
+You may **not**, without prior written permission:
+
+- sell or redistribute copies of the software;
+- publish forks, binaries, or container images;
+- offer it as SaaS, hosting, or an API service;
+- use it in production or in commercial business operations;
+- integrate it into another backend, platform, or product;
+- provide paid setup, customization, support, or consulting services for third parties using this software.
+
+Companies may evaluate the software privately and temporarily before entering a paid agreement, but that evaluation must remain non-production, non-commercial, and non-redistributive.
+
+Contact: alvaradocjosorio@gmail.com / +51 933984317
+
+**Desarrollado por Joaquin Alvarado | 2026**
