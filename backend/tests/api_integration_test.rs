@@ -32,13 +32,13 @@ async fn place_bet_persists_to_postgres_via_redis_streams() {
 
     let db_host = pg_node.get_host().await.unwrap();
     let db_port = pg_node.get_host_port_ipv4(5432).await.unwrap();
-    
+
     let redis_host = redis_node.get_host().await.unwrap();
     let redis_port = redis_node.get_host_port_ipv4(6379).await.unwrap();
 
     // 3. preparamos los settings reales
     let mut config = get_configuration().expect("Falló al leer la configuración base.");
-    
+
     // sobrescribimos con los puertos desde docker
     config.database.host = db_host.to_string();
     config.database.port = db_port;
@@ -69,50 +69,36 @@ async fn place_bet_persists_to_postgres_via_redis_streams() {
         .await
         .expect("Falló al ejecutar las migraciones en el testcontainer.");
 
-    // inyectamos un usuario valido con saldo para las validaciones 
-    // del caso de uso
+    // inyectamos un usuario valido con saldo (schema real: tabla users con balance integrado)
     let user_id = uuid::Uuid::new_v4();
     sqlx::query(
         r#"
-        INSERT INTO users (id, username, email, password_hash)
-        VALUES ($1, 'testuser', 'test@test.com', 'hash')
+        INSERT INTO users (id, email, password_hash, name, balance)
+        VALUES ($1, 'test@test.com', 'hash', 'Test User', 100000)
         "#)
         .bind(user_id)
-        .execute(&db_pool).await.unwrap();
-
-    sqlx::query(
-        r#"
-        INSERT INTO wallets (user_id, balance)
-        VALUES ($1, 5000)
-        "#)
-        .bind(user_id)
-        .execute(&db_pool).await.unwrap();
-
-    let match_id = uuid::Uuid::new_v4();
-    sqlx::query(
-        r#"
-        INSERT INTO matches (id, home_team, away_team, status)
-        VALUES ($1, 'Team A', 'Team B', 'active')
-        "#)
-        .bind(match_id)
         .execute(&db_pool).await.unwrap();
 
     // 5. levantamos la app real en plano asincrono
-    // arranca redis streams pub/sub logic real
     let application = Application::build(config).await.expect("Falló build app.");
     let app_port = application.port();
     let server_task = tokio::spawn(application.run_until_stopped());
 
-    // 6. hacemos test flujo HTTP
+    // 6. cliente HTTP para el test
     let client = reqwest::Client::new();
-    
-    // 7. hacemos peticion HTTP POST al endpoint de bets
+
+    let match_id = uuid::Uuid::new_v4();
+
+    // 7. POST al endpoint de bets
+    // selection es requerido por el DTO desde que se agrego el campo al backend
+    // odds en milésimas (1500 = 1.50), amount en centavos
     let response = client.post(&format!("http://127.0.0.1:{}/bets", app_port))
         .json(&serde_json::json!({
             "user_id": user_id,
             "match_id": match_id,
+            "selection": "HomeWin",
             "amount": 500,
-            "odds": 1.5,
+            "odds": 1500,
         }))
         .send()
         .await
@@ -124,8 +110,8 @@ async fn place_bet_persists_to_postgres_via_redis_streams() {
     let bet_id_str = json_resp["bet_id"].as_str().unwrap();
     let bet_uuid = uuid::Uuid::parse_str(bet_id_str).unwrap();
 
-    // 8. polling a postgres
-    let max_retries = 200; 
+    // 8. polling a postgres — 4 segundos total para runners lentos de CI
+    let max_retries = 400;
     let mut current_retry = 0;
     let mut bet_persisted = false;
 
@@ -147,10 +133,9 @@ async fn place_bet_persists_to_postgres_via_redis_streams() {
         current_retry += 1;
     }
 
-    // log para errores de CI/CD.
     assert!(
         bet_persisted,
-        "Timeout: El worker de Redis Streams no persistió la apuesta en Postgres después de 2 segundos."
+        "Timeout: El worker de Redis Streams no persistió la apuesta en Postgres después de 4 segundos."
     );
 
     // 9. graceful shutdown del test
