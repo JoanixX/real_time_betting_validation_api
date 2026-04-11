@@ -4,11 +4,14 @@ use high_concurrency_api::Application;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    // 1. telemetría (logs estructurados en json)
+    let file_appender = tracing_appender::rolling::never(".", "test_logs.txt");
+    let (non_blocking, _guard) = tracing_appender::non_blocking(file_appender);
+    
+    use tracing_subscriber::fmt::writer::MakeWriterExt;
     let subscriber = get_subscriber(
         "high_concurrency_api".into(),
         "info".into(),
-        std::io::stdout,
+        std::io::stdout.and(non_blocking),
     );
     init_subscriber(subscriber);
 

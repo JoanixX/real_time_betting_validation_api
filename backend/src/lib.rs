@@ -64,8 +64,9 @@ impl Application {
         let cache = RedisCacheAdapter::build(&configuration.redis);
 
         // pool de redis dedicado para alta concurrencia
-        let redis_pool_config =
+        let mut redis_pool_config =
             deadpool_redis::Config::from_url(configuration.redis.connection_string());
+        redis_pool_config.pool = Some(deadpool_redis::PoolConfig::new(200));
         let redis_pool = redis_pool_config
             .create_pool(Some(deadpool_redis::Runtime::Tokio1))
             .expect("Falló la creación del pool de redis");
