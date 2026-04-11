@@ -1,6 +1,5 @@
 // Este es el mapeo de errores de dominio a respuestas http
 // basicamente un puente entre la arquitectura y el protocolo http
-
 use crate::domain::DomainError;
 use actix_web::HttpResponse;
 
@@ -58,7 +57,8 @@ pub fn domain_error_to_response(error: DomainError) -> HttpResponse {
             // logueamos el error de la infraestructura redis
             tracing::error!("Error de infraestructura: {}", msg);
             HttpResponse::InternalServerError().json(serde_json::json!({
-                "error": "Ocurrió un error procesando la transacción"
+                "error": "Ocurrió un error procesando la transacción",
+                "message": msg
             }))
         }
     }
