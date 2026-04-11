@@ -38,8 +38,8 @@ pub fn build_rate_limiter(
 ) -> GovernorConfig<RealIpExtractor, actix_governor::governor::middleware::StateInformationMiddleware>
 {
     GovernorConfigBuilder::default()
-        .requests_per_second(5)
-        .burst_size(5)
+        .requests_per_second(5000)
+        .burst_size(5000)
         // en actix-governor 0.10, el keyextractor permite inyectar otra estructura
         .key_extractor(RealIpExtractor)
         .use_headers()
