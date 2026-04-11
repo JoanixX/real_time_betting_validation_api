@@ -85,7 +85,14 @@ pub fn spawn_bet_persister_worker(redis_pool: Pool, db_pool: PgPool) {
                 }
                 Err(e) => {
                     error!("Error leyendo stream (PEL): {}", e);
-                    tokio::time::sleep(Duration::from_secs(5)).await;
+                    tokio::time::sleep(Duration::from_secs(2)).await;
+                    if e.is_io_error() || e.is_connection_dropped() || e.to_string().contains("10054") {
+                        if let Ok(new_conn) = redis_pool.get().await {
+                            info!("Reconectado a Redis tras error en PEL.");
+                            redis_conn = new_conn;
+                            continue;
+                        }
+                    }
                     break;
                 }
             }
@@ -122,6 +129,12 @@ pub fn spawn_bet_persister_worker(redis_pool: Pool, db_pool: PgPool) {
                     // tradicional, solo vacio
                     error!("Error leyendo stream (Nuevos mensajes): {}", e);
                     tokio::time::sleep(Duration::from_secs(2)).await;
+                    if e.is_io_error() || e.is_connection_dropped() || e.to_string().contains("10054") {
+                        if let Ok(new_conn) = redis_pool.get().await {
+                            info!("Reconectado a Redis tras error al leer nuevos mensajes.");
+                            redis_conn = new_conn;
+                        }
+                    }
                 }
             }
         }
